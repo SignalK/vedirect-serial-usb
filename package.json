@@ -1,0 +1,17 @@
+{
+  "name": "vedirect-signalk",
+  "version": "0.0.1",
+  "description": "Plugin to read ve.direct via USB",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "signalk-node-server-plugin"
+  ],
+  "author": "Joachim Bakke",
+  "license": "ISC",
+  "dependencies": {
+    "vedirect": "^0.2.1"
+  }
+}
