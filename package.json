@@ -12,5 +12,6 @@
   "author": "Joachim Bakke",
   "license": "ISC",
   "dependencies": {
+    "serialport": "^6.2.2"
   }
 }
