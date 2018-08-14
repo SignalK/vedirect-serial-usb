@@ -12,6 +12,5 @@
   "author": "Joachim Bakke",
   "license": "ISC",
   "dependencies": {
-    "vedirect": "^0.2.1"
   }
 }

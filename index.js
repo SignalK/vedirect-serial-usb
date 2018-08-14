@@ -1,4 +1,4 @@
-var vedirect = require( 'vedirect' );
+var vedirect = require( './vedirect' );
 var bmvdata = {};
 
 module.exports = function(app)
