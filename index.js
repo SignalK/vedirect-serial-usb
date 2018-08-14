@@ -26,10 +26,10 @@ module.exports = function(app)
   plugin.start = function(options)
   {
     vedirect.open(options.device);
-    forever {
+
       bmvdata = vedirect.update();
-      console.log(bmvdata.V);
-    }
+      console.log(bmvdata.mainBattVoltage);
+
 
   }
   plugin.stop = function(options)

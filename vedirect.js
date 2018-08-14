@@ -1,10 +1,5 @@
 var serialport = require('serialport');
 
-//
-// BMV
-//
-var serialport = require('serialport');
-
 var bmvdata = {};
 
 //Add checksum test
@@ -53,6 +48,7 @@ function parse_serial(line) {
   switch(res[0]) {
     case    'V':
     bmvdata.mainBattVoltage = Math.floor(res[1]/10)/100;
+    console.log("voltage: " + Math.floor(res[1]/10)/100)
     break;
     case    'VS':
     bmvdata.auxBatteryVoltage = Math.floor(res[1]/10)/100;
@@ -208,14 +204,14 @@ function parse_serial(line) {
 
 exports.open = function(ve_port) {
   port =  new serialport(ve_port, {
-    baudrate: 19200,
-    parser: serialport.parsers.readline('\r\n')});
-    port.on('data', function(line) {
-      //                   parse_serial(ve_port, line);
-      parse_serial(line);
-    });
+                        baudrate: 19200,
+                        parser: serialport.parsers.readline('\r\n')});
+                 port.on('data', function(line) {
+//                   parse_serial(ve_port, line);
+                   parse_serial(line);
+                 });
 
-  }
+}
 
   exports.update = function() {
     return bmvdata;
