@@ -1,4 +1,5 @@
 var serialport = require('serialport');
+const Readline = serialport.parsers.Readline;
 
 var bmvdata = {};
 
@@ -18,6 +19,7 @@ function get_product_longname(pid) {
   if (pid == "0xA046") return("BlueSolar MPPT 150/70");
   if (pid == "0xA047") return("BlueSolar MPPT 150/100");
   if (pid == "0xA049") return("BlueSolar MPPT 100/50 rev2");
+  //many more here...
   return ("Unknown");
 };
 
@@ -48,13 +50,14 @@ function parse_serial(line) {
   switch(res[0]) {
     case    'V':
     bmvdata.mainBattVoltage = Math.floor(res[1]/10)/100;
-    console.log("voltage: " + Math.floor(res[1]/10)/100)
+    console.log("voltage: " + res[1]/1000)
     break;
     case    'VS':
     bmvdata.auxBatteryVoltage = Math.floor(res[1]/10)/100;
     break;
     case    'VM':
     bmvdata.midPointVoltage = res[1];
+    //console.log("midpoint: " + res[1])
     break;
     case    'DM':
     bmvdata.midPointDeviation = res[1];
@@ -67,6 +70,7 @@ function parse_serial(line) {
     break;
     case    'I':
     bmvdata.batteryCurrent = res[1];
+    //console.log("current: " + res[1])
     break;
     case    'IL':
     bmvdata.loadCurrent = res[1];
@@ -179,6 +183,7 @@ function parse_serial(line) {
     case    'PID':
     bmvdata.PID = res[1];
     bmvdata.LONG = get_product_longname(res[1]);
+    //console.log("youve got the " + bmvdata.LONG)
     break;
     case    'SER#':
     bmvdata.serialNumber = res[1];
@@ -203,15 +208,15 @@ function parse_serial(line) {
 }
 
 exports.open = function(ve_port) {
-  port =  new serialport(ve_port, {
-                        baudrate: 19200,
-                        parser: serialport.parsers.readline('\r\n')});
-                 port.on('data', function(line) {
-//                   parse_serial(ve_port, line);
-                   parse_serial(line);
-                 });
 
-}
+  port =  new serialport(ve_port, {
+    baudRate: 19200});
+    const parser = port.pipe(new Readline());
+    parser.on('data', function(line) {
+      parse_serial(line);
+    });
+
+  }
 
   exports.update = function() {
     return bmvdata;

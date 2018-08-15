@@ -20,6 +20,16 @@ module.exports = function(app)
         type: "string",
         title: "USB device",
         default: "/dev/ttyUSB0"
+      },
+      mainBatt: {
+        type: "string",
+        title: "Main Battery name in SK path",
+        default: "House"
+      },
+      auxBatt: {
+        type: "string",
+        title: "Aux Battery name in SK path",
+        default: "Starter"
       }
     }
   }
