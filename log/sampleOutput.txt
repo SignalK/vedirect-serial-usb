@@ -1,0 +1,297 @@
+VS	5
+I	0
+P	0
+CE	0
+
+H5	0
+H6	0
+H7	7
+H8	12184
+V	12140TTG	-1
+Alarm	OFF
+Relay	OFF
+	⸮
+H1	-1
+H2	0
+H3	0
+H4	0
+H50
+H10	0
+H11	0
+H12	0
+H15	3
+Relay	OFF
+AR	0
+BMV	702
+FWH3	0
+H4	0
+H5	0
+H6	0
+H7	7
+8	0
+Checksum	⸮
+PID	0x204
+V	
+H1	-1
+H2	0
+H3	0
+H4	0
+H5	0
+PID	0x204
+V	12140
+VS	5
+IRelay	OFF
+AR	0
+BMV	702
+FW	0308
+Checksum	⸮	0
+H4	0
+H5	0
+H2	0
+H15	3
+H16	7
+H17	0
+H18	0
+Checksum	⸮0
+P	0
+CE	0
+SOC	1000
+TTG	-
+H1	-1
+H2	0
+H3	0
+H4	0
+H0	0
+H11	0
+H12	0
+H15	3
+H16
+H1	-1
+H2	0
+H7	7
+H8	12180
+H9	0
+H10	0
+40
+VS	5
+I	0
+P	0	1000
+TTG	-1
+Alarm	OFF
+Relay
+H1	-1
+
+PID	0
+H7	7
+H8	12180
+H9	0
+H10	0
+cksum	⸮
+H1	-1
+H2	0
+H3	0
+H4	
+H9	0
+H10	0
+H11	0
+H12	0
+
+CE	0
+SOC	1000
+TTG	-1
+Alar
+FW	0308
+Checksum	⸮
+H1	-1
+H	7
+H8	12180
+H9	0
+H10	0
+H11	S	5
+I	0
+P	0
+CE	0
+SO
+AR	0
+BMV	702
+FW	0308
+Checks9	0
+H10	0
+H11	0
+H12	0
+H154
+V	12140FF
+Relay	OFF
+AR	0
+BMV	702
+0
+H3	0
+H4	0
+H12	0
+H15	3
+H16	7
+H17	0
+PID	0x204
+V	12140
+VS	TTG	-1
+Alarm	OFF
+Relay	OFF
+	0
+H6	0
+H7	7
+H8	12180
+H9	H16	7
+H17	0
+H18	0
+Checksum	⸮
+H1	-1
+H2	0
+H
+PID	0x204
+V		-1
+Alarm	OFF
+Relay	OFF
+AR		0
+H4	0
+H5	0
+H
+PID	0x204
+7
+H17	0
+H18	0
+Checksum	⸮
+POC	1000
+TTG	-1
+Alarm	OFF
+RelID	
+Alarm	OFF
+Relay	OFF
+AR	0
+V	702
+FW	0308
+Checksum	⸮H17	0
+H18	0
+Checksum	⸮
+PID	0ecksum	⸮
+PID	0x204
+V	12139
+702
+FW	0308
+Checksum	⸮
+PID	0x204
+V	12140
+FF
+AR	0
+BMV	702
+FW	0308
+Che
+H1	-15	3
+H16	7
+H17	0
+H18	0
+CheckH5	0
+H6	0
+H7	7
+H8	12180
+4
+V	12140E	0
+SOC	1000
+TTG	-1
+Alarm	O0
+H3	0
+H4	0
+H12	0
+H15	3
+H16	7
+H17	0
+PID	0x204
+V	12R	0
+BMV	702
+FW	0308
+Checksum
+H16	7
+H17	0
+H18	0
+Checksum	⸮
+V	12140
+0308
+Checksum	⸮
+H1	-1
+H2	0
+H12	0
+H15	3
+H16	7
+H17	0
+H18
+BMV	702
+FW	0308
+Checksum	⸮
+
+H6	0
+H7	7
+H8	12180
+H9	0
+08
+Checksum	⸮
+H1	-1
+H2	0
+H3
+PID	0x204
+1
+Alarm	OFF
+Relay	OFF
+AR	01	-
+H17	0
+H18	0
+Checksum	⸮
+PIDOC	1000
+TTG	-1
+Alarm	OFF
+Re
+H4	0
+H5	0
+H6	0
+H
+H15	3
+H16	7
+H17	0
+H18	0
+CID	Alarm	OFF
+Relay	OFF
+AR	0
+BM	1000
+TTG	-1
+Alarm	OFF
+Rel80
+H9	0
+H10	0
+H11	0
+H12	0H15	3
+H16	7
+H17	0
+H18	0
+Che	0x20
+H1	-1
+H2	0
+H3	0
+H4H11	0
+H12	0
+H15	3
+H16	7
+H
+VS	5
+I	0
+P	0
+CE
+H9	0
+H10	0
+H11	0
+H12	0
+H1
+PID
+CE	0
+SOC	1000
+TTG	-1
+Alar
+FW	0308
+Checksum	⸮
