@@ -3,6 +3,7 @@
 - [x] Include log file for testing
 - [x] Expand list of product IDs/devices
 - [x] Implement all enums in the VE.direct spec
-- [ ] Make parser run on entire block, and check checksum for each block (in progress)
-- [ ] Emit deltas for entire block, if checksum checks out (in progress)
+- [ ] Make parser run on entire block, and check checksum for each block
+- [ ] Emit deltas for entire block, if checksum checks out
+- [ ] Pass delta on to SK server
 - [ ] Test on more devices (help needed)
