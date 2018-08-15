@@ -4,7 +4,7 @@
   "description": "Plugin to read ve.direct via USB",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha"
   },
   "keywords": [
     "signalk-node-server-plugin"
@@ -13,5 +13,18 @@
   "license": "ISC",
   "dependencies": {
     "serialport": "^6.2.2"
+  },
+  "standard": {
+    "globals": [
+      "describe",
+      "it",
+      "expect",
+      "before"
+    ]
+  },
+  "devDependencies": {
+    "chai": "^4.1.2",
+    "chai-things": "^0.2.0",
+    "mocha": "^5.2.0"
   }
 }

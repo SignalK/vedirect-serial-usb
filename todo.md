@@ -1,4 +1,8 @@
-* compare the full block to checksum (started in branch)
-* emit deltas after checksum checks out
-* test on more units (help needed)
-* expand list of units
+- [x] Reformat code into a Parser class with separate field and product definition
+- [x] Make start on unit tests (WIP)
+- [x] Include log file for testing
+- [x] Expand list of product IDs/devices
+- [x] Implement all enums in the VE.direct spec
+- [ ] Make parser run on entire block, and check checksum for each block (in progress)
+- [ ] Emit deltas for entire block, if checksum checks out (in progress)
+- [ ] Test on more devices (help needed)
