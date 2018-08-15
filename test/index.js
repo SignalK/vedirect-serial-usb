@@ -1,7 +1,7 @@
 const fs = require('fs')
 const join = require('path').join
 const chai = require('chai')
-const Parser = require('../lib')
+const Parser = require('../lib/Parser')
 const expect = chai.expect
 const parser = new Parser()
 
