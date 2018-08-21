@@ -1,5 +1,13 @@
-# vedirect-signalk
+# vedirect-serial-usb
 
-This plugin is meant for decoding Victron voltage monitors and MTTPs using the VE.Direct to USB [interface](https://www.victronenergy.com/accessories/ve-direct-to-usb-interface)
+> Signal K Node.js server plugin that reads and parses VE.direct data via serial USB [interface](https://www.victronenergy.com/accessories/ve-direct-to-usb-interface).
 
-It is currently work in progress, so look at todo.md to help
+
+### Installation
+
+Use the Signal K app store or install via NPM in the Signal K server root directory: `npm install @signalk/vedirect-serial-usb`
+
+
+### Usage
+
+Set up the appropiate device on the settings page of this plugin in the Signal K server admin UI, for instance to `/dev/ttyUSB0` and enable the plugin. Your VE.Direct data will be available in Signal K format via various clients and apps. 
