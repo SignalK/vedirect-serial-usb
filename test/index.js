@@ -11,7 +11,7 @@ describe('VE.direct parser', () => {
   before(done => {
     try {
       const text = fs.readFileSync(join(__dirname, '../log/sampleOutput.txt'), 'utf-8')
-      lines = text.split('\n').map(line => line.trim())
+      lines = text.split('\n').map(line => `\n${line}`)
       done()
     } catch (err) {
       done(err)
@@ -26,18 +26,20 @@ describe('VE.direct parser', () => {
 
   it('Parses each line withouth error', done => {
     try {
-      const parsed = []
-      const listener = data => parsed.push(data)
+      let parsed = {}
+      const listener = data => {
+        parsed = data
+      }
 
-      parser.on('set', listener)
+      parser.on('parsed', listener)
 
       lines.forEach(line => {
-        parser.parse(line)
+        parser.addChunk(line)
       })
 
-      parser.removeListener('set', listener)
-      expect(parsed.length).to.be.a('number')
-      expect(parsed.length).to.equal(212)
+      parser.removeListener('parsed', listener)
+      expect(Object.keys(parsed).length).to.be.a('number')
+      expect(Object.keys(parsed).length).to.equal(212)
       done()
     } catch (err) {
       done(err)
@@ -46,21 +48,20 @@ describe('VE.direct parser', () => {
 
   it('Parses the correct number of keys', done => {
     try {
-      const parsed = {}
+      let parsed = {}
       const listener = data => {
-        parsed[data.key] = data.value
+        parsed = data
       }
 
-      parser.on('set', listener)
+      parser.on('parsed', listener)
 
       lines.forEach(line => {
-        parser.parse(line)
+        parser.addChunk(line)
       })
 
-      parser.removeListener('set', listener)
+      parser.removeListener('parsed', listener)
       expect(Object.keys(parsed).length).to.be.a('number')
       expect(Object.keys(parsed).length).to.equal(28)
-      console.log(JSON.stringify(parser.getData(), null, 2))
       done()
     } catch (err) {
       done(err)

@@ -37,20 +37,22 @@ module.exports = function (app) {
   plugin.start = function (options) {
     parser = new Parser(options)
 
+    /* @TODO implement delta generation in parser and handle here
     parser.on('delta', delta => {
-      // @TODO: do something with this delta. Pass on to app.
+      // Do something with delta; pass on to app.
     })
+    // */
 
     serial.open(options.device, parser)
   }
 
-  plugin.stop = function (options) {
+  plugin.stop = function () {
     if (parser) {
       parser.removeAllListeners()
       parser = null
     }
 
-    serial.close(options.device)
+    serial.close()
   }
 
   return plugin
