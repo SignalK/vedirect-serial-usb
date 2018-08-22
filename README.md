@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/joabakk/vedirect-signalk)](https://travis-ci.org/joabakk/vedirect-signalk)
+[![Build Status](https://travis-ci.org/joabakk/vedirect-signalk.svg?branch=master)](https://travis-ci.org/joabakk/vedirect-signalk)
 
 # vedirect-serial-usb
 
