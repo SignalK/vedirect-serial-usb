@@ -4,7 +4,6 @@ const Parser = require('./lib/Parser')
 module.exports = function (app) {
   let parser = null
   const plugin = {}
-  // const selfContext = 'vessels.' + app.selfId
 
   plugin.id = 'vedirect-signalk'
   plugin.name = 'VE.Direct to Signal K'
@@ -37,11 +36,10 @@ module.exports = function (app) {
   plugin.start = function (options) {
     parser = new Parser(options)
 
-    /* @TODO implement delta generation in parser and handle here
     parser.on('delta', delta => {
-      // Do something with delta; pass on to app.
+      app.handleMessage('pluginId', delta)
+
     })
-    // */
 
     serial.open(options.device, parser)
   }
