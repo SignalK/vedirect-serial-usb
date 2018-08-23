@@ -37,11 +37,12 @@ module.exports = function (app) {
   plugin.start = function (options) {
     parser = new Parser(options)
 
-    /* @TODO implement delta generation in parser and handle here
+    // @TODO implement delta generation in parser and handle here
     parser.on('delta', delta => {
+app.handleMessage('pluginId', delta)
       // Do something with delta; pass on to app.
     })
-    // */
+    // 
 
     serial.open(options.device, parser)
   }
