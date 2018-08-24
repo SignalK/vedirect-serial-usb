@@ -11,7 +11,9 @@
   ],
   "author": "Joachim Bakke",
   "license": "ISC",
-  "contributors": ["Fabian Tollenaar <fabian@decipher.industries> (https://decipher.industries)"],
+  "contributors": [
+    "Fabian Tollenaar <fabian@decipher.industries> (https://decipher.industries)"
+  ],
   "dependencies": {
     "debug": "^3.1.0",
     "serialport": "^6.2.2"
