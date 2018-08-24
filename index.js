@@ -29,6 +29,11 @@ module.exports = function (app) {
         type: 'string',
         title: 'Aux Battery name in SK path',
         default: 'Starter'
+      },
+      charger: {
+        type: 'string',
+        title: 'Charger name in SK path',
+        default: 'Unknown'
       }
     }
   }
