@@ -9,10 +9,9 @@
   "keywords": [
     "signalk-node-server-plugin"
   ],
-  "author": "Joachim Bakke",
+  "author": "Joachim Bakke <github@heiamoss.com> & Fabian Tollenaar <fabian@decipher.industries> (https://decipher.industries)",
   "license": "ISC",
   "contributors": [
-    "Fabian Tollenaar <fabian@decipher.industries> (https://decipher.industries)"
   ],
   "dependencies": {
     "debug": "^3.1.0",
