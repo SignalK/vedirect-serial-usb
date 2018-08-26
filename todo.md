@@ -6,11 +6,11 @@
 - [x] Expand list of product IDs/devices
 - [x] Implement all enums in the VE.direct spec
 - [x] Make parser run on entire block, and check checksum for each block
-- [ ] Test checksum implementation with real Victron device (help needed)
-- [ ] Emit deltas for entire block, if checksum checks out
-- [ ] Pass delta on to SK server
+- [x] Test checksum implementation with real Victron device (help needed)
+- [x] Emit deltas for entire block, if checksum checks out
+- [x] Pass delta on to SK server
 - [ ] Test on more Victron devices (help needed)
-
+- [ ] Create back door to allow CI tests to complete without failing checksum
 
 # Notes
 
