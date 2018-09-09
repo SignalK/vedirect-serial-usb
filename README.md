@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/joabakk/vedirect-serial-usb.svg?branch=master)](https://travis-ci.org/joabakk/vedirect-serial-usb)
+[![Build Status](https://travis-ci.org/joabakk/vedirect-serial-usb.svg?branch=master)](https://travis-ci.org/joabakk/vedirect-serial-usb) [![Greenkeeper badge](https://badges.greenkeeper.io/joabakk/vedirect-serial-usb.svg)](https://greenkeeper.io/)
 
 # vedirect-serial-usb
 
