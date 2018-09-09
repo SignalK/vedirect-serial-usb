@@ -10,3 +10,4 @@ branches:
   only:
   - master
   - development
+  - /^greenkeeper/.*$/
