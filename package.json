@@ -15,7 +15,7 @@
   ],
   "dependencies": {
     "debug": "^3.1.0",
-    "serialport": "^6.2.2"
+    "serialport": "^7.0.2"
   },
   "standard": {
     "globals": [
