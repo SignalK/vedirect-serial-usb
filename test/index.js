@@ -3,11 +3,14 @@ const join = require('path').join
 const chai = require('chai')
 const Parser = require('../lib/Parser')
 const expect = chai.expect
-const parser = new Parser()
+
+const parser = new Parser({
+  ignoreChecksum: true
+})
 
 let lines = []
 
-describe('VE.direct parser', () => {
+describe('VE.Direct parser', () => {
   before(done => {
     try {
       const text = fs.readFileSync(join(__dirname, '../log/sampleOutput.txt'), 'utf-8')
@@ -24,44 +27,23 @@ describe('VE.direct parser', () => {
     done()
   })
 
-  it('Parses each line withouth error', done => {
+  it('Parses each line that has a Signal K representation withouth error', done => {
     try {
-      let parsed = {}
-      const listener = data => {
-        parsed = data
+      let parsed = []
+
+      const listener = delta => {
+        parsed.push(delta)
       }
 
-      parser.on('parsed', listener)
+      parser.on('delta', listener)
 
       lines.forEach(line => {
-        parser.addChunk(line)
+        parser.addChunk(Buffer.from(line))
       })
 
-      parser.removeListener('parsed', listener)
-      expect(Object.keys(parsed).length).to.be.a('number')
-      expect(Object.keys(parsed).length).to.equal(212)
-      done()
-    } catch (err) {
-      done(err)
-    }
-  })
-
-  it('Parses the correct number of keys', done => {
-    try {
-      let parsed = {}
-      const listener = data => {
-        parsed = data
-      }
-
-      parser.on('parsed', listener)
-
-      lines.forEach(line => {
-        parser.addChunk(line)
-      })
-
-      parser.removeListener('parsed', listener)
-      expect(Object.keys(parsed).length).to.be.a('number')
-      expect(Object.keys(parsed).length).to.equal(28)
+      parser.removeListener('delta', listener)
+      expect(parsed.length).to.be.a('number')
+      expect(parsed.length).to.equal(16)
       done()
     } catch (err) {
       done(err)

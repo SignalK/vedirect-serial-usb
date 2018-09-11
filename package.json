@@ -11,8 +11,7 @@
   ],
   "author": "Joachim Bakke <github@heiamoss.com> & Fabian Tollenaar <fabian@decipher.industries> (https://decipher.industries)",
   "license": "ISC",
-  "contributors": [
-  ],
+  "contributors": [],
   "dependencies": {
     "debug": "^3.1.0",
     "serialport": "^7.0.2"
