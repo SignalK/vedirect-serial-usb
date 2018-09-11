@@ -13,7 +13,7 @@
   "license": "ISC",
   "contributors": [],
   "dependencies": {
-    "debug": "^3.1.0",
+    "debug": "^4.0.0",
     "serialport": "^7.0.2"
   },
   "standard": {
