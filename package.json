@@ -1,16 +1,17 @@
 {
   "name": "@signalk/vedirect-serial-usb",
-  "version": "0.1.9",
+  "version": "1.0.0",
   "description": "Signal K Node.js server plugin to read VE.Direct data via serial USB",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha",
+    "publish": "npm publish --access public --scope @signalk ."
   },
   "keywords": [
     "signalk-node-server-plugin"
   ],
   "author": "Joachim Bakke <github@heiamoss.com> & Fabian Tollenaar <fabian@decipher.industries> (https://decipher.industries)",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "contributors": [],
   "dependencies": {
     "debug": "^3.1.0",
