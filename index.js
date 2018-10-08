@@ -30,10 +30,10 @@ module.exports = function (app) {
         title: 'Aux Battery name in SK path',
         default: 'Starter'
       },
-      charger: {
+      solar: {
         type: 'string',
-        title: 'Charger name in SK path',
-        default: 'Unknown'
+        title: 'Solar name in SK path',
+        default: 'Main'
       }
     }
   }
