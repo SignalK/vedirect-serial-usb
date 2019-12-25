@@ -23,7 +23,7 @@
   "contributors": [],
   "dependencies": {
     "debug": "^4.0.1",
-    "serialport": "^7.0.2"
+    "serialport": "^8.0.6"
   },
   "standard": {
     "globals": [
