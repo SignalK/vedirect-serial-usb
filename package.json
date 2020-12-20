@@ -17,13 +17,14 @@
     "url": "https://github.com/SignalK/vedirect-serial-usb/issues"
   },
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/SignalK/vedirect-serial-usb"
+    "type": "git",
+    "url": "https://github.com/SignalK/vedirect-serial-usb"
   },
   "contributors": [],
   "dependencies": {
     "debug": "^4.0.1",
-    "serialport": "^7.0.2"
+    "package-lock.json": "^1.0.0",
+    "serialport": "^9.0.0"
   },
   "standard": {
     "globals": [
