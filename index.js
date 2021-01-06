@@ -1,4 +1,5 @@
 const serial = require('./lib/serial')
+const udp = require('./lib/udp')
 const Parser = require('./lib/Parser')
 
 module.exports = function (app) {
@@ -18,7 +19,13 @@ module.exports = function (app) {
       device: {
         type: 'string',
         title: 'USB device',
-        default: '/dev/ttyUSB0'
+        description: '/dev/ttyUSB0 for example'
+      },
+      udpPort: {
+        type: 'number',
+        title: 'UDP port',
+        description: 'Leave USB device empty to use UDP',
+        default: '7878'
       },
       mainBatt: {
         type: 'string',
@@ -43,10 +50,16 @@ module.exports = function (app) {
 
     parser.on('delta', delta => {
       app.handleMessage('pluginId', delta)
-
     })
 
-    serial.open(options.device, parser)
+    if (options.device) {
+      serial.open(options.device, parser)
+    } else if (options.udpPort) {
+      udp.listen(options.udpPort, parser, app.debug)
+    } else {
+      app.error('Configure either USB device or UDP port')
+    }
+
   }
 
   plugin.stop = function () {
