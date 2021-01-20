@@ -1,5 +1,6 @@
 const serial = require('./lib/serial')
 const udp = require('./lib/udp')
+const tcp = require('./lib/tcp')
 const Parser = require('./lib/Parser')
 
 module.exports = function (app) {
@@ -24,8 +25,23 @@ module.exports = function (app) {
       udpPort: {
         type: 'number',
         title: 'UDP port',
-        description: 'Leave USB device empty to use UDP',
-        default: '7878'
+        description: 'Leave USB device and TCP empty to use UDP',
+        default: 7878
+      },
+      host: {
+        type: 'string',
+        title: 'TCP host',
+        description: 'Leave USB device and UDP empty to use TCP'
+      },
+      tcpPort: {
+        type: 'number',
+        title: 'TCP port',
+        description: 'Leave USB device and UDP empty to use TCP',
+      },
+      ignoreChecksum: {
+        type: 'boolean',
+        title: 'Ignore Checksum',
+        default: true
       },
       mainBatt: {
         type: 'string',
@@ -56,8 +72,10 @@ module.exports = function (app) {
       serial.open(options.device, parser)
     } else if (options.udpPort) {
       udp.listen(options.udpPort, parser, app.debug)
+    } else if (options.tcpPort && options.host) {
+      tcp.connect(options.host, options.tcpPort, parser, app.debug)
     } else {
-      app.error('Configure either USB device or UDP port')
+      app.error('Configure either USB device, UDP port or TCP host and port')
     }
 
   }
@@ -67,8 +85,9 @@ module.exports = function (app) {
       parser.removeAllListeners()
       parser = null
     }
-
     serial.close()
+    udp.close(app.debug)
+    tcp.close(app.debug)
   }
 
   return plugin
