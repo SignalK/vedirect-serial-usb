@@ -14,6 +14,13 @@ Use the Signal K app store or install via NPM in the Signal K server root direct
 
 Set up the appropiate device on the settings page of this plugin in the Signal K server admin UI, for instance to `/dev/ttyUSB0` and enable the plugin. Your VE.Direct data will be available in Signal K format via various clients and apps.
 
+### Connections
+
+- USB: Enter device path e.g `/dev/ttyUSB0`
+- UDP: Enter `port` to listen, e.g. default `7878`. To use UDP, leave USB entry empty
+- TCP: Enter `host` and `port` to connect. To use TCP, leave both USB and UDP entries empty
+
+Ignore checksum option: If you need to ignore checksum, use this option 
 
 ### License
 
