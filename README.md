@@ -19,7 +19,7 @@ Note that above list may not be complete.
 
 The TCP and UDP connection methods are to allow connecting to a Victron product
 too far away to run a serial cable. Ie. using a bridge to LAN/Wi-Fi that takes
-the serial data and makes it available on a TCP socker or sends it out as UDP
+the serial data and makes it available on a TCP socket or sends it out as UDP
 packets. There are many of such devices available, as well as example DIY projects.
 A good example on how to make it yourself is explained here:
 https://pysselilivet.blogspot.com/2021/02/victron-vedirect-with-raspberry.html.
