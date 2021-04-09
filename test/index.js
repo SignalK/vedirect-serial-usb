@@ -5,7 +5,7 @@ const Parser = require('../lib/Parser')
 const expect = chai.expect
 
 const parser = new Parser({
-  ignoreChecksum: true
+  vedirect: [ { device: 'UDP', connection: 'localhost', port: 7878, ignoreChecksum: true, mainBatt: 'House', auxBatt: 'Starter', solar: 'Main' } ]
 })
 
 let lines = []
@@ -30,7 +30,7 @@ describe('VE.Direct parser', () => {
   it('Parses each line that has a Signal K representation withouth error', done => {
     try {
       let parsed = []
-
+      
       const listener = delta => {
         parsed.push(delta)
       }
@@ -38,7 +38,7 @@ describe('VE.Direct parser', () => {
       parser.on('delta', listener)
 
       lines.forEach(line => {
-        parser.addChunk(Buffer.from(line))
+        parser.addChunk(Buffer.from(line), 0)
       })
 
       parser.removeListener('delta', listener)
