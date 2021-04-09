@@ -5,79 +5,36 @@ const Parser = require('./lib/Parser')
 
 module.exports = function (app) {
   let parser = null
+  let shaddow = null
   const plugin = {}
 
   plugin.id = 'vedirect-signalk'
   plugin.name = 'VE.Direct to Signal K'
   plugin.description = plugin.name
 
-  plugin.schema = {
-    type: 'object',
-    required: [
-      'device'
-    ],
-    properties: {
-      device: {
-        type: 'string',
-        title: 'USB device',
-        description: '/dev/ttyUSB0 for example'
-      },
-      udpPort: {
-        type: 'number',
-        title: 'UDP port',
-        description: 'Leave USB device and TCP empty to use UDP',
-        default: 7878
-      },
-      host: {
-        type: 'string',
-        title: 'TCP host',
-        description: 'Leave USB device and UDP empty to use TCP'
-      },
-      tcpPort: {
-        type: 'number',
-        title: 'TCP port',
-        description: 'Leave USB device and UDP empty to use TCP',
-      },
-      ignoreChecksum: {
-        type: 'boolean',
-        title: 'Ignore Checksum',
-        default: true
-      },
-      mainBatt: {
-        type: 'string',
-        title: 'Main Battery name in SK path',
-        default: 'House'
-      },
-      auxBatt: {
-        type: 'string',
-        title: 'Aux Battery name in SK path',
-        default: 'Starter'
-      },
-      solar: {
-        type: 'string',
-        title: 'Solar name in SK path',
-        default: 'Main'
-      }
-    }
-  }
-
   plugin.start = function (options) {
+    shaddow = options;
+
     parser = new Parser(options)
 
     parser.on('delta', delta => {
       app.handleMessage('pluginId', delta)
     })
 
-    if (options.device) {
-      serial.open(options.device, parser)
-    } else if (options.udpPort) {
-      udp.listen(options.udpPort, parser, app.debug)
-    } else if (options.tcpPort && options.host) {
-      tcp.connect(options.host, options.tcpPort, parser, app.debug)
-    } else {
-      app.error('Configure either USB device, UDP port or TCP host and port')
-    }
-
+    Object.keys(options.vedirect).forEach(items => {
+      let type = options.vedirect[items].device;
+      let connection = options.vedirect[items].connection;
+      let port = options.vedirect[items].port;
+      if (type == 'Serial') {
+        serial.open(connection, parser, items)
+      } else if (type == 'UDP') {
+        udp.listen(port, parser, app.debug, items)
+      } else if (type == 'TCP') {
+        tcp.connect(connection, port, parser, app.debug, items)
+      } else {
+        console.log(error)
+      }
+    });
   }
 
   plugin.stop = function () {
@@ -85,9 +42,80 @@ module.exports = function (app) {
       parser.removeAllListeners()
       parser = null
     }
-    serial.close()
-    udp.close(app.debug)
-    tcp.close(app.debug)
+    if (shaddow) {
+      Object.keys(shaddow.vedirect).forEach(items => {
+        let type = shaddow.vedirect[items].device;
+        let connection = shaddow.vedirect[items].connection;
+        let port = shaddow.vedirect[items].port;
+        if (type == 'Serial') {
+          serial.close(items)
+        } else if (type == 'UDP') {
+          udp.close(app.debug, items)
+        } else {
+          tcp.close(app.debug, items)
+        }
+      });
+      shaddow = null
+    }
+  }
+
+  plugin.schema = {
+    type: 'object',
+    properties: {
+      vedirect: {
+        type: 'array',
+        title: 'Connections',
+        description: 'Connections to VE.Direct devices',
+        items: {
+          type: 'object',
+          required: [],
+          properties: {
+            device: {
+              type: 'string',
+              default: 'Serial',
+              title: 'Select device',
+              enum: [
+                'Serial',
+                'UDP',
+                'TCP',
+              ],
+            },
+            connection: {
+              type: 'string',
+              title: 'Connection details',
+              description: 'Serial: e.g. /dev/ttyUSB0,  UDP: ignored  or  TCP: IP address',
+              default: '/dev/ttyUSB0'
+            },
+            port: {
+              type: 'number',
+              title: 'port',
+              description: 'Serial: ignored, UDP/TCP: port',
+              default: 7878
+            },
+            ignoreChecksum: {
+              type: 'boolean',
+              title: 'Ignore Checksum',
+              default: true
+            },
+            mainBatt: {
+              type: 'string',
+              title: 'Main Battery name in SK path',
+              default: 'House'
+            },
+            auxBatt: {
+              type: 'string',
+              title: 'Aux Battery name in SK path',
+              default: 'Starter'
+            },
+            solar: {
+              type: 'string',
+              title: 'Solar name in SK path',
+              default: 'Main'
+            }
+          },
+        },
+      },
+    },
   }
 
   return plugin
