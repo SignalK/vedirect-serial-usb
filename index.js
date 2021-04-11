@@ -4,7 +4,7 @@ const tcp = require('./lib/tcp')
 const Parser = require('./lib/Parser')
 
 module.exports = function (app) {
-  let parser = null
+  let parser = []
   let shaddow = null
   const plugin = {}
 
@@ -15,13 +15,13 @@ module.exports = function (app) {
   plugin.start = function (options) {
     shaddow = options;
 
-    parser = new Parser(options)
-
-    parser.on('delta', delta => {
-      app.handleMessage('pluginId', delta)
-    })
-
     Object.keys(options.vedirect).forEach(items => {
+      parser[items] = new Parser(options)
+
+      parser[items].on('delta', delta => {
+        app.handleMessage('pluginId', delta)
+      })
+
       let type = options.vedirect[items].device;
       let connection = options.vedirect[items].connection;
       let port = options.vedirect[items].port;
@@ -36,12 +36,11 @@ module.exports = function (app) {
   }
 
   plugin.stop = function () {
-    if (parser) {
-      parser.removeAllListeners()
-      parser = null
-    }
     if (shaddow) {
       Object.keys(shaddow.vedirect).forEach(items => {
+        parser[items].removeAllListeners()
+        parser[items] = null
+
         let type = shaddow.vedirect[items].device;
         let connection = shaddow.vedirect[items].connection;
         let port = shaddow.vedirect[items].port;
