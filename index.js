@@ -26,14 +26,12 @@ module.exports = function (app) {
       let connection = options.vedirect[items].connection;
       let port = options.vedirect[items].port;
       if (type == 'Serial') {
-        serial.open(connection, parser, items)
+        serial.open(connection, parser, app.debug, items)
       } else if (type == 'UDP') {
         udp.listen(port, parser, app.debug, items)
       } else if (type == 'TCP') {
         tcp.connect(connection, port, parser, app.debug, items)
-      } else {
-        console.log(error)
-      }
+      } 
     });
   }
 
@@ -48,7 +46,7 @@ module.exports = function (app) {
         let connection = shaddow.vedirect[items].connection;
         let port = shaddow.vedirect[items].port;
         if (type == 'Serial') {
-          serial.close(items)
+          serial.close(app.debug, items)
         } else if (type == 'UDP') {
           udp.close(app.debug, items)
         } else {
