@@ -2,8 +2,30 @@
 
 # vedirect-serial-usb
 
-> Signal K Node.js server plugin that reads and parses VE.direct data via multiple interfaces. E.g. serial [USB](https://www.victronenergy.com/accessories/ve-direct-to-usb-interface), UDP and TCP interfaces.
+This code is a [Signal K Node Server](https://github.com/SignalK/signalk-server-node) plugin. It reads and parses Victron VE.Direct data.
 
+The common way to connect to a Victron product is with the Victron [VE.Direct to USB interface](https://www.victronenergy.com/accessories/ve-direct-to-usb-interface) cable.
+Alternatively, this plugin also supports receiving the data via UDP and on a TCP socket.
+
+Compatible Victron products:
+
+- BMV-700 series of Battery Monitors
+- SmartShunt series of Battery Monitors
+- SmartSolar Chargers
+- BlueSolar Chargers
+- Phoenix Inverters, including the Smarts, having a VE.Direct comms port
+
+Note that above list may not be complete. 
+
+The TCP and UDP connection methods are to allow connecting to a Victron product
+too far away to run a serial cable. Ie. using a bridge to LAN/Wi-Fi that takes
+the serial data and makes it available on a TCP socket or sends it out as UDP
+packets. There are many of such devices available, as well as example DIY projects.
+A good example on how to make it yourself is explained here:
+https://pysselilivet.blogspot.com/2021/02/victron-vedirect-with-raspberry.html.
+
+Lastly, note that when having a Victron GX Device, you won't be needing this
+plugin. Details for that [here](https://github.com/sbender9/signalk-venus-plugin).
 
 ### Installation
 
