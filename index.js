@@ -85,7 +85,7 @@ module.exports = function (app) {
             },
             port: {
               type: 'number',
-              title: 'port',
+              title: 'Port',
               description: 'Serial: ignored, UDP/TCP: port',
               default: 7878
             },
