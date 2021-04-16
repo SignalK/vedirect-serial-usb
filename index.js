@@ -42,8 +42,6 @@ module.exports = function (app) {
         parser[items] = null
 
         let type = shaddow.vedirect[items].device;
-        let connection = shaddow.vedirect[items].connection;
-        let port = shaddow.vedirect[items].port;
         if (type == 'Serial') {
           serial.close(app.debug, items)
         } else if (type == 'UDP') {

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "push": "npm publish --access public --scope @signalk ."
+    "push": "npm publish --access public --scope @signalk .",
+    "postinstall": "node ./migration.js"
   },
   "keywords": [
     "signalk-node-server-plugin"
