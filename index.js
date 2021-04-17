@@ -7,7 +7,6 @@ module.exports = function (app) {
   let parser = []
   let shaddow = null
   const plugin = {}
-
   plugin.id = 'vedirect-signalk'
   plugin.name = 'VE.Direct to Signal K'
   plugin.description = plugin.name
@@ -15,41 +14,78 @@ module.exports = function (app) {
   plugin.start = function (options) {
     shaddow = options;
 
-    Object.keys(options.vedirect).forEach(items => {
-      parser[items] = new Parser(options)
+    if (typeof options.vedirect !== 'undefined') {
+      Object.keys(options.vedirect).forEach(items => {
+        parser[items] = new Parser(options)
 
-      parser[items].on('delta', delta => {
+        parser[items].on('delta', delta => {
+          app.handleMessage('pluginId', delta)
+        })
+
+        let type = options.vedirect[items].device;
+        let connection = options.vedirect[items].connection;
+        let port = options.vedirect[items].port;
+        if (type == 'Serial') {
+          serial.open(connection, parser, app.debug, items)
+        } else if (type == 'UDP') {
+          udp.listen(port, parser, app.debug, items)
+        } else if (type == 'TCP') {
+          tcp.connect(connection, port, parser, app.debug, items)
+        } 
+      });
+    } else {
+      if (options.device) {
+        oldConfig = {vedirect: [{device: 'Serial', connection: options.device, ignoreChecksum: options.ignoreChecksum,
+          mainBatt: options.mainBatt, auxBatt: options.auxBatt, solar: options.solar}]}
+      } else if (options.udpPort) {
+        oldConfig = {vedirect: [{device: 'UDP', port: options.udpPort, ignoreChecksum: options.ignoreChecksum,
+          mainBatt: options.mainBatt, auxBatt: options.auxBatt, solar: options.solar}]}
+      } else if (options.host) {
+        oldConfig = {vedirect: [{device: 'TCP', connection: options.host, port: options.tcpPort, ignoreChecksum: options.ignoreChecksum,
+          mainBatt: options.mainBatt, auxBatt: options.auxBatt, solar: options.solar}]}
+      }
+      parser[0] = new Parser(oldConfig)
+
+      parser[0].on('delta', delta => {
         app.handleMessage('pluginId', delta)
       })
 
-      let type = options.vedirect[items].device;
-      let connection = options.vedirect[items].connection;
-      let port = options.vedirect[items].port;
-      if (type == 'Serial') {
-        serial.open(connection, parser, app.debug, items)
-      } else if (type == 'UDP') {
-        udp.listen(port, parser, app.debug, items)
-      } else if (type == 'TCP') {
-        tcp.connect(connection, port, parser, app.debug, items)
-      } 
-    });
+      if (options.device) {
+        serial.open(options.device, parser, app.debug, 0)
+      } else if (options.udpPort) {
+        udp.listen(options.udpPort, parser, app.debug, 0)
+      } else if (options.host) {
+        tcp.connect(options.host, options.tcpPort, parser, app.debug, 0)
+      }
+    }
   }
 
   plugin.stop = function () {
     if (shaddow) {
-      Object.keys(shaddow.vedirect).forEach(items => {
-        parser[items].removeAllListeners()
-        parser[items] = null
-
-        let type = shaddow.vedirect[items].device;
-        if (type == 'Serial') {
-          serial.close(app.debug, items)
-        } else if (type == 'UDP') {
-          udp.close(app.debug, items)
-        } else {
-          tcp.close(app.debug, items)
+      if (typeof shaddow.vedirect !== 'undefined') {
+        Object.keys(shaddow.vedirect).forEach(items => {
+          parser[items].removeAllListeners()
+          parser[items] = null
+          let type = shaddow.vedirect[items].device;
+          if (type == 'Serial') {
+            serial.close(app.debug, items)
+          } else if (type == 'UDP') {
+            udp.close(app.debug, items)
+          } else {
+            tcp.close(app.debug, items)
+          }
+        });
+      } else {
+        parser[0].removeAllListeners()
+        parser[0] = null
+        if (shaddow.device) {
+          serial.close(app.debug, 0)
+        } else if (shaddow.udpPort) {
+          udp.close(app.debug, 0)
+        } else if (shaddow.host) {
+          tcp.close(app.debug, 0)
         }
-      });
+      }
       shaddow = null
     }
   }
