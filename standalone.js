@@ -13,9 +13,9 @@ const SKPlugin = require('./index')
 class VEDirect extends EventEmitter {
   constructor (config = {}) {
     super()
-    
+
     this.app = {
-      handleMessage () {},
+      handleMessage: (kind, data) => this.emit(kind, data),
       debug: true,
       options: {
         device: 'Serial',
@@ -30,15 +30,6 @@ class VEDirect extends EventEmitter {
     }
 
     this.plugin = SKPlugin(this.app)
-    
-    this.plugin.on('delta', (delta) => {
-      this.emit('delta', delta)
-    })
-
-    this.plugin.on('error', (err) => {
-      this.emit('error', err)
-    })
-
     this.start()
   }
 
