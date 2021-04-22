@@ -15,7 +15,7 @@ Compatible Victron products:
 - BlueSolar Chargers
 - Phoenix Inverters, including the Smarts, having a VE.Direct comms port
 
-Note that above list may not be complete. 
+Note that above list may not be complete.
 
 The TCP and UDP connection methods are to allow connecting to a Victron product
 too far away to run a serial cable. Ie. using a bridge to LAN/Wi-Fi that takes
@@ -31,34 +31,60 @@ plugin. Details for that [here](https://github.com/sbender9/signalk-venus-plugin
 
 Use the Signal K app store or install via NPM in the Signal K server root directory: `npm install @signalk/vedirect-serial-usb`
 
-
 ### Usage
 
 Set up the appropiate device on the settings page of this plugin in the Signal K server admin UI, for instance to `/dev/ttyUSB0` and enable the plugin. Your VE.Direct data will be available in Signal K format via various clients and apps.
 
 ### Connections
+
 **Select device**
+
 - Serial, UDP or TCP
 
 **Connection details**
+
 - Serial: Enter device path e.g `/dev/ttyUSB0`
-- UDP: *`ignored`*
+- UDP: _`ignored`_
 - TCP: Enter host `IP address`
 
 **Port**
-- Serial: *`ignored`*
+
+- Serial: _`ignored`_
 - UDP/TCP: `port`
 
 **Ignore Checksum**
+
 - If you want to ignore checksum, use this option. Default `ON`
 
 **SK Paths**
-- Give each device unique SK paths 
+
+- Give each device unique SK paths
+
+### Usage as a library
+
+It's possible to use this plugin as a library, in other Node.js code. This feature simply wraps the plugin in an easy-to-consume manner, so functionality is identical. Example:
+
+```javascript
+const VEDirect = require('@signalk/vedirect-serial-usb/standalone')
+const consumer = new VEDirect({
+  device: 'Serial',
+  connection: '/dev/ttyUSB0',
+  port: 7878, // ignored when "device" is set to "Serial"
+  ignoreChecksum: true,
+  mainBatt: 'House',
+  auxBatt: 'Starter',
+  solar: 'Main',
+})
+
+consumer.on('delta', (delta) => console.log('[onDelta]', delta))
+consumer.stop() // stop the plugin, destruct the connections
+consumer.start() // (re-)start the plugin
+```
 
 ### License
 
 ```
-Copyright 2018 Joachim Bakke <github@heiamoss.com>, Fabian Tollenaar <fabian@decipher.industries> and 
+Copyright 2018 Joachim Bakke <github@heiamoss.com>, Fabian Tollenaar <fabian@decipher.industries> and
 Karl-Erik Gustafsson <ke.gustafsson@gmail.com>
 
 Licensed under the Apache License, Version 2.0 (the "License");
