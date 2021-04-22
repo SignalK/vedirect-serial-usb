@@ -12,6 +12,8 @@ const SKPlugin = require('./index')
 
 class VEDirect extends EventEmitter {
   constructor (config = {}) {
+    super()
+    
     this.app = {
       handleMessage () {},
       debug: true,
