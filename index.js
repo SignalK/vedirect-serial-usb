@@ -2,6 +2,7 @@ const serial = require('./lib/serial')
 const udp = require('./lib/udp')
 const tcp = require('./lib/tcp')
 const Parser = require('./lib/Parser')
+const VEDirect = require('./standalone')
 
 module.exports = function (app) {
   let parser = []
