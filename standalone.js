@@ -13,13 +13,10 @@ class VEDirect extends EventEmitter {
   constructor (config = {}, _debug = false) {
     super()
 
+    this._debug = _debug
     this.app = {
       handleMessage: (kind, data) => this.emit(kind, data),
-      debug: (...args) => {
-        if (_debug === true) {
-          console.log.apply(console, args)
-        }
-      },
+      debug: (args) => this.debug(args),
       options: {
         device: 'Serial',
         connection: '/dev/ttyUSB0',
@@ -37,7 +34,8 @@ class VEDirect extends EventEmitter {
   }
 
   start () {
-    if (!this.plugin) {
+    if (!this.plugin || !this.plugin.hasOwnProperty('start')) {
+      this.debug(`Plugin not initialised, can't start`)
       return
     }
 
@@ -45,11 +43,18 @@ class VEDirect extends EventEmitter {
   }
 
   stop () {
-    if (!this.plugin) {
+    if (!this.plugin || !this.plugin.hasOwnProperty('stop')) {
+      this.debug(`Plugin not initialised, can't stop`)
       return
     }
 
     this.plugin.stop()
+  }
+
+  debug (...args) {
+    if (this._debug) {
+      console.log.apply(console, args)
+    }
   }
 }
 
