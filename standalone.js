@@ -15,7 +15,13 @@ class VEDirect extends EventEmitter {
 
     this._debug = _debug
     this.app = {
-      handleMessage: (kind, data) => this.emit(kind, data),
+      handleMessage: (kind, data) => {
+        if (kind === 'pluginId') {
+          this.emit('delta', data)
+          return
+        }
+        this.emit(kind, data)
+      },
       debug: (args) => this.debug(args),
       options: {
         device: 'Serial',
