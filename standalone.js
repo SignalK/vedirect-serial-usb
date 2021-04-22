@@ -9,14 +9,17 @@
 
 const EventEmitter = require('events')
 const SKPlugin = require('./index')
-
 class VEDirect extends EventEmitter {
-  constructor (config = {}) {
+  constructor (config = {}, _debug = false) {
     super()
 
     this.app = {
       handleMessage: (kind, data) => this.emit(kind, data),
-      debug: true,
+      debug: (...args) => {
+        if (_debug === true) {
+          console.log.apply(console, args)
+        }
+      },
       options: {
         device: 'Serial',
         connection: '/dev/ttyUSB0',
