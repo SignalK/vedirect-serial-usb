@@ -67,9 +67,7 @@ It's possible to use this plugin as a library, in other Node.js code. This featu
 ```javascript
 const VEDirect = require('@signalk/vedirect-serial-usb/standalone')
 const consumer = new VEDirect({
-  device: 'Serial',
-  connection: '/dev/ttyUSB0',
-  port: 7878, // ignored when "device" is set to "Serial"
+  device: '/dev/ttyUSB0',
   ignoreChecksum: true,
   mainBatt: 'House',
   auxBatt: 'Starter',
