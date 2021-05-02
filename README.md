@@ -9,7 +9,7 @@ Alternatively, this plugin also supports receiving the data via UDP and on a TCP
 
 Compatible Victron products:
 
-- BMV-700 series of Battery Monitors
+- BMV-700 series of Battery Monitors (reported to work also on the BMV-600)
 - SmartShunt series of Battery Monitors
 - SmartSolar Chargers
 - BlueSolar Chargers
