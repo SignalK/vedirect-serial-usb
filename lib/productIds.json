@@ -79,5 +79,6 @@
   "0xA279": "Phoenix Inverter 12V 1200VA 120V",
   "0xA27A": "Phoenix Inverter 24V 1200VA 120V",
   "0xA27C": "Phoenix Inverter 48V 1200VA 120V",
-  "0xA345": "Phoenix Smart Charger 12V 30A 3 rev2"
+  "0xA345": "Phoenix Smart Charger 12V 30A 3 rev2",
+  "0xA381": "BMV-712 Smart"
 }
