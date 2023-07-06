@@ -19,6 +19,7 @@ fs.readFile(path.resolve(jsonPath, 'vedirect-signalk.json'), 'UTF-8', (err, data
         'ignoreChecksum': obj.configuration.ignoreChecksum,
         'mainBatt': obj.configuration.mainBatt,
         'auxBatt': obj.configuration.auxBatt,
+        'bmv': obj.configuration.bmv,
         'solar': obj.configuration.solar
       }]
     } else if (obj.configuration.udpPort) {
@@ -29,6 +30,7 @@ fs.readFile(path.resolve(jsonPath, 'vedirect-signalk.json'), 'UTF-8', (err, data
         'ignoreChecksum': obj.configuration.ignoreChecksum,
         'mainBatt': obj.configuration.mainBatt,
         'auxBatt': obj.configuration.auxBatt,
+        'bmv': obj.configuration.bmv,
         'solar': obj.configuration.solar
       }]
     } else if (obj.configuration.host) {
@@ -39,6 +41,7 @@ fs.readFile(path.resolve(jsonPath, 'vedirect-signalk.json'), 'UTF-8', (err, data
         'ignoreChecksum': obj.configuration.ignoreChecksum,
         'mainBatt': obj.configuration.mainBatt,
         'auxBatt': obj.configuration.auxBatt,
+        'bmv': obj.configuration.bmv,
         'solar': obj.configuration.solar
       }]
     }

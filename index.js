@@ -37,13 +37,13 @@ module.exports = function (app) {
     } else {
       if (options.device) {
         oldConfig = {vedirect: [{device: 'Serial', connection: options.device, ignoreChecksum: options.ignoreChecksum,
-          mainBatt: options.mainBatt, auxBatt: options.auxBatt, solar: options.solar}]}
+          mainBatt: options.mainBatt, auxBatt: options.auxBatt, bmv: options.bmv, solar: options.solar}]}
       } else if (options.udpPort) {
         oldConfig = {vedirect: [{device: 'UDP', port: options.udpPort, ignoreChecksum: options.ignoreChecksum,
-          mainBatt: options.mainBatt, auxBatt: options.auxBatt, solar: options.solar}]}
+          mainBatt: options.mainBatt, auxBatt: options.auxBatt, bmv: options.bmv, solar: options.solar}]}
       } else if (options.host) {
         oldConfig = {vedirect: [{device: 'TCP', connection: options.host, port: options.tcpPort, ignoreChecksum: options.ignoreChecksum,
-          mainBatt: options.mainBatt, auxBatt: options.auxBatt, solar: options.solar}]}
+          mainBatt: options.mainBatt, auxBatt: options.auxBatt, bmv: options.bmv, solar: options.solar}]}
       }
       parser[0] = new Parser(oldConfig)
 
@@ -138,6 +138,11 @@ module.exports = function (app) {
               type: 'string',
               title: 'Aux Battery name in SK path',
               default: 'Starter'
+            },
+            bmv: {
+              type: 'string',
+              title: 'BMV name in SK path',
+              default: 'bmv'
             },
             solar: {
               type: 'string',
