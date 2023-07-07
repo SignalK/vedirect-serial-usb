@@ -30,7 +30,7 @@ class VEDirect extends EventEmitter {
         ignoreChecksum: true,
         mainBatt: 'House',
         auxBatt: 'Starter',
-        auxBatt: 'bmv',
+        bmv: 'bmv',
         solar: 'Main',
         ...(config || {}),
       }
