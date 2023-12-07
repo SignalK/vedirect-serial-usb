@@ -1,6 +1,6 @@
 {
   "name": "@signalk/vedirect-serial-usb",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Signal K Node.js server plugin to read VE.Direct data via serial USB",
   "main": "index.js",
   "scripts": {
