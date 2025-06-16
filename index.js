@@ -4,6 +4,22 @@ const tcp = require('./lib/tcp')
 const Parser = require('./lib/Parser')
 const VEDirect = require('./standalone')
 
+function getRelayPutHandler(item) {
+  function relayPutHandler(context, path, value, callback) {
+    if (typeof value !== 'number' || (value != 0 && value != 1)) {
+      return { state: 'COMPLETED', statusCode: 400, message: `Value ${value} out of range for ${path}` };
+    }
+
+    let cword = value ? ":84E030001FB" : ":84E030000FC";
+    serial.write(`${cword}\n`, item);
+
+    let message = `Setting ${path} to ${value} on connection ${item}`;
+    return { state: 'COMPLETED', statusCode: 200, message: message };
+  }
+
+  return relayPutHandler;
+}
+
 module.exports = function (app) {
   let parser = []
   let shaddow = null
@@ -26,8 +42,12 @@ module.exports = function (app) {
         let type = options.vedirect[items].device;
         let connection = options.vedirect[items].connection;
         let port = options.vedirect[items].port;
+        let bmv = options.vedirect[items].bmv;
         if (type == 'Serial') {
           serial.open(connection, parser, app.debug, items)
+          if (bmv != '') {
+            app.registerPutHandler('vessels.self', `electrical.batteries.${bmv}.relay`, getRelayPutHandler(items));
+          }
         } else if (type == 'UDP') {
           udp.listen(port, parser, app.debug, items)
         } else if (type == 'TCP') {
@@ -53,6 +73,9 @@ module.exports = function (app) {
 
       if (options.device) {
         serial.open(options.device, parser, app.debug, 0)
+        if (options.bmv != '') {
+          app.registerPutHandler('vessels.self', `electrical.batteries.${options.bmv}.relay`, getRelayPutHandler(items));
+        }
       } else if (options.udpPort) {
         udp.listen(options.udpPort, parser, app.debug, 0)
       } else if (options.host) {
