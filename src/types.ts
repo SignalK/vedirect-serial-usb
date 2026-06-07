@@ -15,11 +15,20 @@
  *  shim and the network modules use the same shape. */
 export type DebugFn = (message: string) => void
 
+/**
+ * What kind of Victron device a connection talks to. VE.Direct reuses the
+ * `V`/`I` labels for both battery monitors and solar chargers, so the device
+ * type decides where those readings land (see `Field.solarCharger`). Treated as
+ * a battery monitor when unset, which preserves the historical paths.
+ */
+export type DeviceType = 'Battery monitor' | 'Solar charger'
+
 /** One VE.Direct connection as configured in the plugin schema. */
 export interface VEDirectConnection {
   device: 'Serial' | 'UDP' | 'TCP'
   connection: string
   port: number
+  deviceType?: DeviceType
   ignoreChecksum: boolean
   mainBatt: string
   auxBatt: string
@@ -44,6 +53,7 @@ export interface PluginOptions {
   auxBatt?: string
   bmv?: string
   solar?: string
+  deviceType?: DeviceType
 }
 
 /** Flat single-connection configuration accepted by the standalone library
@@ -60,6 +70,7 @@ export interface VEDirectConfig {
   auxBatt?: string
   bmv?: string
   solar?: string
+  deviceType?: DeviceType
 }
 
 /** Minimal structural type for the `app` the signalk-server host passes to
@@ -122,6 +133,14 @@ export interface Field {
   name: string
   path?: string
   unitId?: UnitId
+  /**
+   * Alternative path and unit used when the connection is a solar charger.
+   * VE.Direct sends battery-monitor and charger data under the same labels, but
+   * a charger's reading describes its DC output, which belongs under
+   * electrical.solar, not electrical.batteries where it would clash with a
+   * monitor on the same bank.
+   */
+  solarCharger?: { path: string; unitId: UnitId }
   units?: string
   type?: FieldType
   value?: FieldValue

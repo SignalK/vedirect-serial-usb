@@ -406,4 +406,15 @@ describe('fields - static table', () => {
       expect(rowOf(field!), `field ${key}`).to.deep.equal(expected)
     }
   })
+
+  it('routes battery voltage and current to electrical.solar for a solar charger', () => {
+    expect(fields.V!.solarCharger).to.deep.equal({
+      path: 'electrical.solar.*.voltage',
+      unitId: 'solar'
+    })
+    expect(fields.I!.solarCharger).to.deep.equal({
+      path: 'electrical.solar.*.current',
+      unitId: 'solar'
+    })
+  })
 })

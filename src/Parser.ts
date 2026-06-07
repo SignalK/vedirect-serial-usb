@@ -404,12 +404,22 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
     if (!field?.path) {
       return null
     }
-    if (field.unitId === undefined) {
-      return field.path
-    }
 
     const conn = this.options.vedirect?.[connectionIndex]
-    return field.path.replace('*', this.resolveUnitId(field.unitId, conn))
+
+    // On a solar charger, VE.Direct's V/I labels describe the charger's DC
+    // output rather than a battery, so those fields are reported under
+    // electrical.solar (via the field's solarCharger override) to avoid
+    // clashing with a battery monitor on the same bank.
+    const override =
+      conn?.deviceType === 'Solar charger' ? field.solarCharger : undefined
+    const path = override?.path ?? field.path
+    const unitId = override?.unitId ?? field.unitId
+
+    if (unitId === undefined) {
+      return path
+    }
+    return path.replace('*', this.resolveUnitId(unitId, conn))
   }
 
   /**

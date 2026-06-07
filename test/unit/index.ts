@@ -142,9 +142,17 @@ describe('plugin factory', () => {
     expect(plugin.id).to.equal('vedirect-signalk')
     expect(plugin.name).to.equal('VE.Direct to Signal K')
     const schema = plugin.schema as {
-      properties: { vedirect: { type: string } }
+      properties: {
+        vedirect: {
+          type: string
+          items: { properties: { deviceType: { enum: string[] } } }
+        }
+      }
     }
     expect(schema.properties.vedirect.type).to.equal('array')
+    expect(
+      schema.properties.vedirect.items.properties.deviceType.enum
+    ).to.deep.equal(['Battery monitor', 'Solar charger'])
   })
 
   it('starts the matching transport for each configured device', () => {
