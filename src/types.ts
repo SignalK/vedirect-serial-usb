@@ -85,13 +85,15 @@ export interface SKDelta {
   updates: Array<{
     source: { label: string; type: string }
     timestamp: string
-    values: Array<{ path: string; value: number | string }>
+    values: Array<{ path: string; value: number | string | null }>
   }>
 }
 
 /** Converts a raw VE.Direct token into a Signal K value. Receives the raw
- *  token and the parser (for cross-field lookups and enum decoding), and
- *  returns the value to store, or null/undefined to skip it. */
+ *  token and the parser (for cross-field lookups and enum decoding). Returns
+ *  the value to store; `undefined` to skip the field, leaving any prior value
+ *  untouched; or `null` to store an explicit null, which clears the value in
+ *  Signal K (e.g. TTG -1, an infinite time-to-go). */
 export type FieldValue = (
   value: string,
   instance: FieldContext
@@ -131,7 +133,7 @@ export type FieldMap = Record<string, Field>
  *  on the parser. */
 export interface StoredField {
   name: string
-  value: number | string
+  value: number | string | null
   path?: string
   unitId?: UnitId
   units?: string
@@ -142,10 +144,10 @@ export interface StoredField {
  *  Implemented by VEDirectParser. */
 export interface FieldContext {
   set(key: string, value: StoredField): void
-  getAlarmReason(value: string | number): string | null
-  getErrorString(value: string | number): string | null
-  getStateOfOperation(value: string | number): string | null
-  getMode(value: string | number): string | null
-  getTrackerOperationMode(value: string | number): string | null
+  getAlarmReason(value: string | number): string | undefined
+  getErrorString(value: string | number): string | undefined
+  getStateOfOperation(value: string | number): string | undefined
+  getMode(value: string | number): string | undefined
+  getTrackerOperationMode(value: string | number): string | undefined
   getProductLongname(value: string): string
 }

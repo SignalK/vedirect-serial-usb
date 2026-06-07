@@ -47,10 +47,10 @@ function convert(
 
 describe('fields - numeric converters', () => {
   // common.number, reached via PPV (panelPower).
-  it('parses integers and rejects non-numbers (number)', () => {
+  it('parses integers and skips non-numbers (number)', () => {
     expect(convert('PPV', '42')).to.equal(42)
     expect(convert('PPV', '-7')).to.equal(-7)
-    expect(convert('PPV', 'not-a-number')).to.equal(null)
+    expect(convert('PPV', 'not-a-number')).to.equal(undefined)
   })
 
   it('passes an already-numeric token through without re-parsing (number)', () => {
@@ -61,30 +61,30 @@ describe('fields - numeric converters', () => {
 
   it('scales millivolts to volts (mV)', () => {
     expect(convert('V', '12340')).to.equal(12.34)
-    expect(convert('V', 'x')).to.equal(null)
+    expect(convert('V', 'x')).to.equal(undefined)
   })
 
   it('floors tenths of a milliamp before scaling to amps (mA)', () => {
     // 2779 -> floor(277.9)=277 -> 2.77 (the floor must not round up to 2.78).
     expect(convert('I', '2779')).to.equal(2.77)
     expect(convert('I', '2770')).to.equal(2.77)
-    expect(convert('I', 'x')).to.equal(null)
+    expect(convert('I', 'x')).to.equal(undefined)
   })
 
   it('converts consumed charge to coulombs (mAh)', () => {
     // 1000 -> floor(100)/100=1 Ah -> 1 * 3600 = 3600 C.
     expect(convert('CE', '1000')).to.equal(3600)
-    expect(convert('CE', 'x')).to.equal(null)
+    expect(convert('CE', 'x')).to.equal(undefined)
   })
 
   it('scales hundredths of a kWh to kWh (kWh)', () => {
     expect(convert('H17', '6078')).to.equal(60.78)
-    expect(convert('H17', 'x')).to.equal(null)
+    expect(convert('H17', 'x')).to.equal(undefined)
   })
 
   it('scales per-mille to a ratio (promille)', () => {
     expect(convert('SOC', '1000')).to.equal(1)
-    expect(convert('SOC', 'x')).to.equal(null)
+    expect(convert('SOC', 'x')).to.equal(undefined)
   })
 })
 
@@ -92,12 +92,22 @@ describe('fields - bespoke value functions', () => {
   it('offsets battery temperature into kelvin and rejects NaN', () => {
     expect(convert('T', '0')).to.equal(273.15)
     expect(convert('T', '25')).to.equal(298.15)
-    expect(convert('T', 'x')).to.equal(null)
+    expect(convert('T', 'x')).to.equal(undefined)
   })
 
-  it('converts time-to-go from minutes to seconds (TTG)', () => {
-    expect(convert('TTG', '10')).to.equal(600) // 10 min * 60
-    expect(convert('TTG', 'x')).to.equal(null)
+  it('converts time-to-go from minutes to seconds, clears on infinite (TTG)', () => {
+    // VE.Direct reports time-to-go in minutes; -1 is the documented "infinite"
+    // sentinel (the battery is not discharging). It must become an explicit
+    // null so Signal K clears any prior estimate, never a negative time. Only
+    // -1 is special: 0 and other negatives scale normally, and a non-numeric
+    // token is a garbled read that is skipped, leaving the last value intact.
+    // Input "600" -> 36000 (s);  "0" -> 0;  "-2" -> -120;  "-1" -> null (clear);
+    //       "-" -> undefined (skip)
+    expect(convert('TTG', '600')).to.equal(36000)
+    expect(convert('TTG', '0')).to.equal(0)
+    expect(convert('TTG', '-2')).to.equal(-120)
+    expect(convert('TTG', '-1')).to.equal(null)
+    expect(convert('TTG', '-')).to.equal(undefined)
   })
 
   it('lowercases the load output state', () => {
@@ -114,12 +124,12 @@ describe('fields - bespoke value functions', () => {
 
   it('scales AC output voltage (0.01 V units) and rejects NaN', () => {
     expect(convert('AC_OUT_V', '24000')).to.equal(240)
-    expect(convert('AC_OUT_V', 'x')).to.equal(null)
+    expect(convert('AC_OUT_V', 'x')).to.equal(undefined)
   })
 
   it('scales AC output current (0.1 A units) and rejects NaN', () => {
     expect(convert('AC_OUT_I', '15')).to.equal(1.5)
-    expect(convert('AC_OUT_I', 'x')).to.equal(null)
+    expect(convert('AC_OUT_I', 'x')).to.equal(undefined)
   })
 
   it('delegates enum fields to the parser decoders', () => {
@@ -133,7 +143,9 @@ describe('fields - bespoke value functions', () => {
   it('decodes PID into productId/productName side effects (with 0x prefix)', () => {
     const { ctx, sets } = makeContext()
     const result = convert('PID', '0xA053', ctx)
-    expect(result, 'PID stores via set() and returns null').to.equal(null)
+    expect(result, 'PID stores via set() and returns undefined').to.equal(
+      undefined
+    )
     expect(sets).to.have.lengthOf(2)
     expect(sets[0]).to.deep.equal({
       key: 'productId',

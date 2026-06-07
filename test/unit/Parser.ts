@@ -146,7 +146,7 @@ describe('VEDirectParser - parse()', () => {
     expect(parser.get('firmwareVersion')?.value).to.equal('0150')
   })
 
-  it('skips a field whose converter returns null', () => {
+  it('skips a field whose converter returns undefined', () => {
     parser.parse('V\tnot-a-number')
     expect(parser.get('mainBattVoltage')).to.equal(undefined)
   })
@@ -284,8 +284,8 @@ describe('VEDirectParser - addChunk() and checksum', () => {
 describe('VEDirectParser - enum decoders', () => {
   const parser = new VEDirectParser(CONNECTION)
 
-  it('decodes every alarm reason and falls through to null', () => {
-    const cases: Array<[number, string | null]> = [
+  it('decodes every alarm reason and falls through to undefined', () => {
+    const cases: Array<[number, string | undefined]> = [
       [1, 'Low voltage'],
       [2, 'High voltage'],
       [4, 'Low state-of-charge'],
@@ -298,8 +298,8 @@ describe('VEDirectParser - enum decoders', () => {
       [512, 'DC ripple'],
       [1024, 'Low V AC out'],
       [2048, 'High V AC out'],
-      [0, null],
-      [3, null]
+      [0, undefined],
+      [3, undefined]
     ]
     for (const [input, expected] of cases) {
       expect(parser.getAlarmReason(input), `AR ${input}`).to.equal(expected)
@@ -308,8 +308,8 @@ describe('VEDirectParser - enum decoders', () => {
     expect(parser.getAlarmReason('256')).to.equal('Overload')
   })
 
-  it('decodes every error code and falls through to null', () => {
-    const cases: Array<[number, string | null]> = [
+  it('decodes every error code and falls through to undefined', () => {
+    const cases: Array<[number, string | undefined]> = [
       [2, 'Battery voltage too high'],
       [17, 'Charger temperature too high'],
       [18, 'Charger overcurrent'],
@@ -321,8 +321,8 @@ describe('VEDirectParser - enum decoders', () => {
       [116, 'Factory calibration data lost'],
       [117, 'Invalid/incompatible firmware'],
       [119, 'User settings invalid'],
-      [0, null],
-      [19, null] // documented as ignorable -> null
+      [0, undefined],
+      [19, undefined] // documented as ignorable -> undefined
     ]
     for (const [input, expected] of cases) {
       expect(parser.getErrorString(input), `ERR ${input}`).to.equal(expected)
@@ -330,15 +330,15 @@ describe('VEDirectParser - enum decoders', () => {
     expect(parser.getErrorString('2')).to.equal('Battery voltage too high')
   })
 
-  it('decodes device mode and falls through to null', () => {
+  it('decodes device mode and falls through to undefined', () => {
     expect(parser.getMode(2)).to.equal('on')
     expect(parser.getMode(4)).to.equal('off')
     expect(parser.getMode(5)).to.equal('eco')
-    expect(parser.getMode(1)).to.equal(null)
+    expect(parser.getMode(1)).to.equal(undefined)
   })
 
-  it('decodes charger state of operation and falls through to null', () => {
-    const cases: Array<[number, string | null]> = [
+  it('decodes charger state of operation and falls through to undefined', () => {
+    const cases: Array<[number, string | undefined]> = [
       [0, 'off'],
       [1, 'low power'],
       [2, 'fault'],
@@ -346,7 +346,7 @@ describe('VEDirectParser - enum decoders', () => {
       [4, 'absorption'],
       [5, 'float'],
       [9, 'inverting'],
-      [7, null]
+      [7, undefined]
     ]
     for (const [input, expected] of cases) {
       expect(parser.getStateOfOperation(input), `CS ${input}`).to.equal(
@@ -355,13 +355,13 @@ describe('VEDirectParser - enum decoders', () => {
     }
   })
 
-  it('decodes tracker operation mode and falls through to null', () => {
+  it('decodes tracker operation mode and falls through to undefined', () => {
     expect(parser.getTrackerOperationMode(0)).to.equal('off')
     expect(parser.getTrackerOperationMode(1)).to.equal(
       'voltage or current limited'
     )
     expect(parser.getTrackerOperationMode(2)).to.equal('mpp tracker active')
-    expect(parser.getTrackerOperationMode(3)).to.equal(null)
+    expect(parser.getTrackerOperationMode(3)).to.equal(undefined)
   })
 })
 
@@ -507,6 +507,51 @@ describe('VEDirectParser - generateDelta()', () => {
     expect(new Date(update.timestamp).toISOString()).to.equal(update.timestamp)
     expect(update.values).to.deep.equal([
       { path: 'electrical.batteries.House.voltage', value: 12.34 }
+    ])
+  })
+})
+
+describe('VEDirectParser - clearing values (explicit null)', () => {
+  let parser: VEDirectParser
+  beforeEach(() => {
+    parser = new VEDirectParser(CONNECTION)
+  })
+
+  it('stores an explicit null when a converter returns null', () => {
+    // A null return means "clear this reading" (TTG -1 = infinite), distinct
+    // from undefined which means "skip". The store must hold the null so a
+    // prior value is overwritten rather than left stale.
+    parser.parse('TTG\t-1')
+    expect(
+      parser.get('timeToGo'),
+      'timeToGo is stored, not skipped'
+    ).to.not.equal(undefined)
+    expect(parser.get('timeToGo')?.value).to.equal(null)
+  })
+
+  it('overwrites a prior finite time-to-go with null when it goes infinite', () => {
+    // Regression for the discharge -> charge transition: once charging starts
+    // the BMV reports TTG -1, and the consumer must see null rather than the
+    // stale estimate (or the old -60 from naive minutes*60 on -1).
+    parser.parse('TTG\t600')
+    expect(parser.get('timeToGo')?.value).to.equal(36000)
+    parser.parse('TTG\t-1')
+    expect(parser.get('timeToGo')?.value).to.equal(null)
+  })
+
+  it('emits the cleared value as null in the generated delta', () => {
+    const deltas: SKDelta[] = []
+    parser.on('delta', (d: SKDelta) => deltas.push(d))
+
+    parser.parse('TTG\t-1')
+    parser.generateDelta(0)
+
+    expect(deltas).to.have.lengthOf(1)
+    expect(deltas[0]!.updates[0]!.values).to.deep.equal([
+      {
+        path: 'electrical.batteries.House.capacity.timeRemaining',
+        value: null
+      }
     ])
   })
 })

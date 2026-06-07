@@ -4,44 +4,45 @@
  * Maps each VE.Direct text-protocol label (e.g. `V`, `SOC`, `PID`) to how it
  * is named, where it lands in the Signal K tree (`path`, with `*` replaced by
  * the configured unit id) and how its raw token is converted. A field with no
- * `value` function stores the raw string; a function returning null/undefined
- * is skipped.
+ * `value` function stores the raw string. A `value` function returns the value
+ * to store, `undefined` to skip the field (leaving any prior value untouched),
+ * or `null` to store an explicit null that clears the value in Signal K.
  */
 import type { FieldMap } from './types'
 
 /** Numeric converters shared across fields. Each accepts the raw token (a
  *  string from the wire, occasionally an already-numeric value) and returns
- *  the scaled number, or null when the token is not a number. */
+ *  the scaled number, or undefined when the token is not a number (skip). */
 const common = {
-  number(value: string | number): number | null {
+  number(value: string | number): number | undefined {
     const n = typeof value === 'number' ? value : parseInt(value, 10)
-    return isNaN(n) ? null : n
+    return isNaN(n) ? undefined : n
   },
 
   // value is in units of 0.01 kWh each
-  kWh(value: string | number): number | null {
+  kWh(value: string | number): number | undefined {
     const n = common.number(value)
-    return n === null ? null : n / 100
+    return n === undefined ? undefined : n / 100
   },
 
-  mV(value: string | number): number | null {
+  mV(value: string | number): number | undefined {
     const n = common.number(value)
-    return n === null ? null : n / 1000
+    return n === undefined ? undefined : n / 1000
   },
 
-  mA(value: string | number): number | null {
+  mA(value: string | number): number | undefined {
     const n = common.number(value)
-    return n === null ? null : Math.floor(n / 10) / 100
+    return n === undefined ? undefined : Math.floor(n / 10) / 100
   },
 
-  mAh(value: string | number): number | null {
+  mAh(value: string | number): number | undefined {
     const n = common.number(value)
-    return n === null ? null : (Math.floor(n / 10) / 100) * 3600
+    return n === undefined ? undefined : (Math.floor(n / 10) / 100) * 3600
   },
 
-  promille(value: string | number): number | null {
+  promille(value: string | number): number | undefined {
     const n = common.number(value)
-    return n === null ? null : n / 1000
+    return n === undefined ? undefined : n / 1000
   }
 }
 
@@ -152,7 +153,7 @@ const fields: FieldMap = {
     type: 'metric',
     value: (value) => {
       const n = common.number(value)
-      return n === null ? null : n + 273.15
+      return n === undefined ? undefined : n + 273.15
     }
   },
   P: {
@@ -180,10 +181,17 @@ const fields: FieldMap = {
     name: 'timeToGo',
     path: 'electrical.batteries.*.capacity.timeRemaining',
     unitId: 'mainBatt',
+    // Time-to-go is reported in minutes. -1 is the documented "infinite"
+    // sentinel (the battery is not discharging); it becomes an explicit null so
+    // Signal K clears any prior estimate rather than showing a negative time. A
+    // non-numeric token is a garbled read and is skipped, leaving the last value.
+    // Input "600" -> 36000 (s);  "-1" -> null (clear);  "-" -> undefined (skip)
     value: (value) => {
       const n = common.number(value)
-      // value is minutes
-      return n === null ? null : n * 60
+      if (n === undefined) {
+        return undefined
+      }
+      return n === -1 ? null : n * 60
     },
     units: 's',
     type: 'metric'
@@ -379,7 +387,7 @@ const fields: FieldMap = {
         name: 'productId',
         value: instance.getProductLongname(pid)
       })
-      return null
+      return undefined
     }
   },
   'SER#': {
@@ -405,7 +413,7 @@ const fields: FieldMap = {
     value: (value) => {
       const n = common.number(value)
       // AC OUT V is reported in units of 0.01 V each.
-      return n === null ? null : n / 100
+      return n === undefined ? undefined : n / 100
     }
   },
   AC_OUT_I: {
@@ -417,7 +425,7 @@ const fields: FieldMap = {
     value: (value) => {
       const n = common.number(value)
       // AC OUT I is reported in units of 0.1 A each.
-      return n === null ? null : n / 10
+      return n === undefined ? undefined : n / 10
     }
   },
   WARN: {

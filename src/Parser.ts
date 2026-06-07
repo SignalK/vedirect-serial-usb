@@ -187,12 +187,15 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
     const converted =
       typeof field.value === 'function' ? field.value(rawData, this) : rawData
 
-    if (typeof converted !== 'undefined' && converted !== null) {
+    // undefined skips the field, leaving any prior value untouched; null is
+    // stored as an explicit null so it clears the value downstream in the
+    // delta (see FieldValue). Only undefined means "no update".
+    if (converted !== undefined) {
       this.set(field.name, { ...field, value: converted })
     }
   }
 
-  getAlarmReason(alarmReason: string | number): string | null {
+  getAlarmReason(alarmReason: string | number): string | undefined {
     switch (parseInt(String(alarmReason), 10)) {
       case 1:
         return 'Low voltage'
@@ -231,11 +234,11 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         return 'High V AC out'
 
       default:
-        return null
+        return undefined
     }
   }
 
-  getErrorString(err: string | number): string | null {
+  getErrorString(err: string | number): string | undefined {
     switch (parseInt(String(err), 10)) {
       case 2:
         return 'Battery voltage too high'
@@ -279,11 +282,11 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         return 'User settings invalid'
 
       default:
-        return null
+        return undefined
     }
   }
 
-  getMode(mode: string | number): string | null {
+  getMode(mode: string | number): string | undefined {
     switch (parseInt(String(mode), 10)) {
       case 2:
         return 'on'
@@ -295,11 +298,11 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         return 'eco'
 
       default:
-        return null
+        return undefined
     }
   }
 
-  getStateOfOperation(cs: string | number): string | null {
+  getStateOfOperation(cs: string | number): string | undefined {
     switch (parseInt(String(cs), 10)) {
       case 0:
         return 'off'
@@ -323,11 +326,11 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         return 'inverting'
 
       default:
-        return null
+        return undefined
     }
   }
 
-  getTrackerOperationMode(mppt: string | number): string | null {
+  getTrackerOperationMode(mppt: string | number): string | undefined {
     switch (parseInt(String(mppt), 10)) {
       case 0:
         return 'off'
@@ -339,7 +342,7 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         return 'mpp tracker active'
 
       default:
-        return null
+        return undefined
     }
   }
 
@@ -364,7 +367,7 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         return { path, value: entry.value }
       })
       .filter(
-        (update): update is { path: string; value: number | string } =>
+        (update): update is { path: string; value: number | string | null } =>
           update !== null
       )
 
