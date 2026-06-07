@@ -91,7 +91,8 @@
     "exclude": [
       "test/**",
       "coverage/**",
-      "dist/**"
+      "dist/**",
+      "src/types.ts"
     ],
     "all": true,
     "reporter": [
