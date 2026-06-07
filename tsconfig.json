@@ -9,7 +9,16 @@
     // churn for a plugin that will always be CJS on the host side.
     "module": "commonjs",
     "moduleResolution": "node",
+    // TS 6.0 marks `node` resolution (alias `node10`) deprecated, to be
+    // removed in 7.0. We keep it on purpose (see above) and acknowledge
+    // the deprecation instead of switching resolution modes.
+    "ignoreDeprecations": "6.0",
     "lib": ["ES2022"],
+    // Ambient-global type packages. TS 6.0 no longer auto-includes a
+    // global-only package like @types/mocha unless it is named here (it
+    // pulls in @types/node anyway via references from serialport/debug).
+    // chai and debug are imported, so they resolve on their own.
+    "types": ["node", "mocha"],
 
     "strict": true,
     "noImplicitOverride": true,
