@@ -18,6 +18,14 @@ import type {
   VEDirectConnection
 } from './types'
 
+// The plugin id doubles as the Signal K source label. It is passed to
+// app.handleMessage() as the provider id, and the server uses that as the
+// `$source` prefix for every value the plugin emits, because the delta's own
+// package-name label (`@signalk/...`) is not a charset-valid source id. The
+// parser stamps a per-connection `src` onto each delta, so the host derives a
+// distinct source per device: `vedirect-signalk.0`, `vedirect-signalk.1`, ...
+const PLUGIN_ID = 'vedirect-signalk'
+
 const createPlugin = function (app: SignalKApp): Plugin {
   const parser: VEDirectParser[] = []
   let shaddow: PluginOptions | null = null
@@ -30,7 +38,7 @@ const createPlugin = function (app: SignalKApp): Plugin {
     parser[connectionIndex] = instance
 
     instance.on('delta', (delta: SKDelta) => {
-      app.handleMessage('pluginId', delta)
+      app.handleMessage(PLUGIN_ID, delta)
     })
 
     if (conn.device === 'Serial') {
@@ -83,7 +91,7 @@ const createPlugin = function (app: SignalKApp): Plugin {
   }
 
   const plugin: Plugin = {
-    id: 'vedirect-signalk',
+    id: PLUGIN_ID,
     name: 'VE.Direct to Signal K',
     description: 'VE.Direct to Signal K',
 

@@ -3,8 +3,8 @@
  *
  * The three transports are replaced (via the require cache) with spies, so the
  * factory's wiring is observed without opening any port: which transport each
- * configured device starts, that parsed deltas reach the host as `pluginId`
- * messages, that the legacy flat config is translated, and that stop() tears
+ * configured device starts, that parsed deltas reach the host under the plugin
+ * id, that the legacy flat config is translated, and that stop() tears
  * each connection down.
  */
 import { expect } from 'chai'
@@ -167,7 +167,7 @@ describe('plugin factory', () => {
     ])
   })
 
-  it('forwards a parsed delta to the host as a pluginId message', () => {
+  it('forwards a parsed delta to the host under the plugin id', () => {
     const { plugin, stubs, messages } = loadPlugin()
     plugin.start({ vedirect: [conn({ device: 'UDP' })] })
 
@@ -177,7 +177,7 @@ describe('plugin factory', () => {
     parser.addChunk(Buffer.from('\nV\t12340\nChecksum\t1'), grabbed!.index)
 
     expect(messages).to.have.lengthOf(1)
-    expect(messages[0]!.id).to.equal('pluginId')
+    expect(messages[0]!.id).to.equal('vedirect-signalk')
     expect(messages[0]!.delta.context).to.equal('vessels.self')
   })
 

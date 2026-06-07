@@ -64,7 +64,8 @@ describe('integration: real BlueSolar MPPT 75/10 capture', () => {
     expect(delta.updates).to.have.lengthOf(1)
     expect(delta.updates[0]!.source).to.deep.equal({
       label: '@signalk/vedirect-serial-usb',
-      type: 'VE.direct'
+      type: 'VE.direct',
+      src: '0'
     })
   })
 

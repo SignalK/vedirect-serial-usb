@@ -83,7 +83,7 @@ export interface Plugin {
 export interface SKDelta {
   context: string
   updates: Array<{
-    source: { label: string; type: string }
+    source: { label: string; type: string; src: string }
     timestamp: string
     values: Array<{ path: string; value: number | string }>
   }>
