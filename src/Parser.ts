@@ -382,7 +382,11 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         {
           source: {
             label: '@signalk/vedirect-serial-usb',
-            type: 'VE.direct'
+            type: 'VE.direct',
+            // Per-connection discriminator. The host combines it with the
+            // provider id into a distinct `$source` (e.g. vedirect-signalk.0),
+            // so several VE.Direct devices remain individually addressable.
+            src: String(connectionIndex)
           },
           timestamp: new Date().toISOString(),
           values

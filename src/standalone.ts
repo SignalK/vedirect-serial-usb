@@ -41,7 +41,10 @@ class VEDirect extends EventEmitter {
 
     this.app = {
       handleMessage: (kind: string, data: SKDelta) => {
-        if (kind === 'pluginId') {
+        // The plugin posts its parsed deltas under its own id; re-emit those as
+        // `delta` events. Anything else the host might receive passes through
+        // on a channel named for its kind.
+        if (kind === this.plugin.id) {
           this.emit('delta', data)
           return
         }

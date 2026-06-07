@@ -74,7 +74,7 @@ describe('standalone wrapper', () => {
     ve.stop()
   })
 
-  it('re-emits non-pluginId host messages under their own channel', () => {
+  it('re-emits other host messages under their own channel', () => {
     const transports = makeTransportStubs()
     const VEDirect = loadStandalone(transports.stubs)
     const ve = new VEDirect()
