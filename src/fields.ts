@@ -51,6 +51,10 @@ const fields: FieldMap = {
     name: 'mainBattVoltage',
     path: 'electrical.batteries.*.voltage',
     unitId: 'mainBatt',
+    // On a solar charger, V and I describe the charger's DC output rather than a
+    // battery, so they are reported under electrical.solar to avoid clashing
+    // with a battery monitor on the same bank.
+    solarCharger: { path: 'electrical.solar.*.voltage', unitId: 'solar' },
     value: common.mV,
     units: 'V',
     type: 'metric'
@@ -110,6 +114,9 @@ const fields: FieldMap = {
     name: 'batteryCurrent',
     path: 'electrical.batteries.*.current',
     unitId: 'mainBatt',
+    // Like V, on a solar charger this is the charger's DC output and is reported
+    // under electrical.solar rather than electrical.batteries.
+    solarCharger: { path: 'electrical.solar.*.current', unitId: 'solar' },
     value: common.mA,
     units: 'A',
     type: 'metric'

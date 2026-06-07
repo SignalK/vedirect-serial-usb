@@ -470,6 +470,30 @@ describe('VEDirectParser - getPath()', () => {
     expect(parser.getPath('serialNumber', 0)).to.equal(null)
     expect(parser.getPath('noSuchField', 0)).to.equal(null)
   })
+
+  it('routes a solar charger current under electrical.solar', () => {
+    const mppt = new VEDirectParser({
+      vedirect: [{ ...CONNECTION.vedirect![0]!, deviceType: 'Solar charger' }]
+    })
+    expect(mppt.getPath('batteryCurrent', 0)).to.equal(
+      'electrical.solar.Main.current'
+    )
+  })
+
+  it('routes a solar charger voltage under electrical.solar', () => {
+    const mppt = new VEDirectParser({
+      vedirect: [{ ...CONNECTION.vedirect![0]!, deviceType: 'Solar charger' }]
+    })
+    expect(mppt.getPath('mainBattVoltage', 0)).to.equal(
+      'electrical.solar.Main.voltage'
+    )
+  })
+
+  it('keeps current on the battery path for a battery monitor', () => {
+    expect(parser.getPath('batteryCurrent', 0)).to.equal(
+      'electrical.batteries.House.current'
+    )
+  })
 })
 
 describe('VEDirectParser - generateDelta()', () => {

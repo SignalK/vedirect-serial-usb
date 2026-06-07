@@ -13,9 +13,9 @@
  * robustness over a noisy stream rather than exact values.
  */
 import { expect } from 'chai'
-import { runBlock, toBlock } from '../helpers/capture'
+import { runBlock, toBlock, STANDARD_OPTIONS } from '../helpers/capture'
 import type { VEDirectParser } from '../../src/Parser'
-import type { SKDelta } from '../../src/types'
+import type { PluginOptions, SKDelta } from '../../src/types'
 
 // One VE.Direct frame as label/value pairs. The Checksum value is a placeholder
 // since verification is disabled by the standard (ignoreChecksum) config.
@@ -40,13 +40,20 @@ const CAPTURE: ReadonlyArray<readonly [string, string]> = [
   ['Checksum', '?']
 ]
 
+// This capture is a solar charger, so configure the connection as one: its V/I
+// (the charger's DC output) then land under electrical.solar instead of
+// electrical.batteries, where they would clash with a battery monitor.
+const MPPT_OPTIONS: PluginOptions = {
+  vedirect: [{ ...STANDARD_OPTIONS.vedirect![0]!, deviceType: 'Solar charger' }]
+}
+
 describe('integration: real BlueSolar MPPT 75/10 capture', () => {
   let parser: VEDirectParser
   let delta: SKDelta
   let values: Array<{ path: string; value: number | string | null }>
 
   before(() => {
-    const run = runBlock(toBlock(CAPTURE))
+    const run = runBlock(toBlock(CAPTURE), MPPT_OPTIONS)
     expect(run.deltas, 'one delta per block').to.have.lengthOf(1)
     parser = run.parser
     delta = run.deltas[0]!
@@ -75,9 +82,10 @@ describe('integration: real BlueSolar MPPT 75/10 capture', () => {
     // undefined (no error) so it is skipped.
     expect(values).to.have.lengthOf(12)
 
-    // Battery (mainBatt -> "House"): mV and mA conversions.
-    expect(valueAt('electrical.batteries.House.voltage')).to.equal(14.99) // V 14990 mV
-    expect(valueAt('electrical.batteries.House.current')).to.equal(2.77) // I 2770 mA
+    // This connection is a solar charger, so V and I describe its DC output and
+    // are reported under electrical.solar rather than electrical.batteries.
+    expect(valueAt('electrical.solar.Main.voltage')).to.equal(14.99) // V 14990 mV -> solar
+    expect(valueAt('electrical.solar.Main.current')).to.equal(2.77) // I 2770 mA -> solar
     expect(valueAt('electrical.charger.House.chargingMode')).to.equal(
       'absorption'
     ) // CS 4

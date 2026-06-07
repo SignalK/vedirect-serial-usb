@@ -65,7 +65,8 @@ const createPlugin = function (app: SignalKApp): Plugin {
       mainBatt: options.mainBatt ?? 'House',
       auxBatt: options.auxBatt ?? 'Starter',
       bmv: options.bmv ?? 'bmv',
-      solar: options.solar ?? 'Main'
+      solar: options.solar ?? 'Main',
+      deviceType: options.deviceType
     }
 
     if (options.device) {
@@ -163,6 +164,14 @@ const createPlugin = function (app: SignalKApp): Plugin {
                 title: 'Port',
                 description: 'Serial: ignored, UDP/TCP: port',
                 default: 7878
+              },
+              deviceType: {
+                type: 'string',
+                title: 'Device type',
+                description:
+                  'Battery monitor keeps V/I under electrical.batteries; Solar charger (MPPT) routes V/I under electrical.solar to avoid clashing with a battery monitor on the same bank',
+                default: 'Battery monitor',
+                enum: ['Battery monitor', 'Solar charger']
               },
               ignoreChecksum: {
                 type: 'boolean',
