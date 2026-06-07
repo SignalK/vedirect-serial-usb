@@ -45,6 +45,11 @@ const defaults = {
   solar: 'solar'
 }
 
+// A VE.Direct block is well under 1 KB. If far more than that accumulates
+// without a Checksum line, the stream is malformed or the sentinel was lost;
+// the cache is dropped rather than left to grow unbounded from device input.
+const MAX_CACHE_LENGTH = 8192
+
 export class VEDirectParser extends EventEmitter implements FieldContext {
   options: ParserOptions
   fields: FieldMap
@@ -82,6 +87,15 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
       // Last line of block. Verify checksum of block in cache and parse
       // line-by-line if checksum is correct.
       this._verifyCacheAndParse(connectionIndex)
+      return
+    }
+
+    if (this.cache.length > MAX_CACHE_LENGTH) {
+      this.warn(
+        `block exceeded ${MAX_CACHE_LENGTH} bytes without a Checksum line; discarding`
+      )
+      this.cache = ''
+      this.sum = 0
     }
   }
 
