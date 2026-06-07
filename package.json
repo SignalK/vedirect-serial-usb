@@ -23,7 +23,6 @@
   },
   "files": [
     "dist",
-    "migration.js",
     "README.md",
     "LICENSE"
   ],
@@ -38,8 +37,7 @@
     "prettier:check": "prettier --check .",
     "prettier": "prettier --write .",
     "format": "npm run prettier",
-    "prepublishOnly": "npm run build",
-    "postinstall": "node ./migration.js"
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "signalk-node-server-plugin"
@@ -56,7 +54,7 @@
   },
   "dependencies": {
     "@serialport/parser-delimiter": "^11.0.0",
-    "debug": "^4.0.1",
+    "debug": "^4.4.3",
     "serialport": "^11.0.0"
   },
   "devDependencies": {
