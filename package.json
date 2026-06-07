@@ -23,9 +23,18 @@
   },
   "files": [
     "dist",
+    "logo.svg",
+    "docs/screenshots",
     "README.md",
     "LICENSE"
   ],
+  "signalk": {
+    "displayName": "Victron VE.Direct",
+    "appIcon": "./logo.svg",
+    "screenshots": [
+      "./docs/screenshots/1_config.png"
+    ]
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "clean": "rimraf dist",
