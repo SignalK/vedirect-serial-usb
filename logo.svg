@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Victron VE.Direct">
+  <defs>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1b6ea8"/>
+      <stop offset="1" stop-color="#0b3a5e"/>
+    </linearGradient>
+    <clipPath id="card">
+      <rect x="0" y="0" width="128" height="128" rx="22"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#card)">
+    <rect width="128" height="128" fill="url(#sea)"/>
+
+    <g stroke="#bee3f4" stroke-opacity="0.25" stroke-width="1" fill="none">
+      <path d="M0 24 H128 M0 48 H128 M0 72 H128 M0 96 H128"/>
+      <path d="M24 0 V128 M48 0 V128 M72 0 V128 M96 0 V128"/>
+    </g>
+
+    <!-- Victron-style energy waves radiating from the device -->
+    <g stroke="#35aee0" stroke-width="2.8" fill="none" stroke-linecap="round">
+      <path d="M53 37 Q61 29 69 37"/>
+      <path d="M48 37 Q61 23 74 37"/>
+      <path d="M43 37 Q61 17 79 37"/>
+    </g>
+
+    <!-- battery (monitor / charger that VE.Direct reads) -->
+    <rect x="53" y="40" width="16" height="7" rx="2.5" fill="#cbd5e1" stroke="#0b3a5e" stroke-width="2"/>
+    <rect x="40" y="47" width="42" height="56" rx="7" fill="#e7eef5" stroke="#0b3a5e" stroke-width="2.6"/>
+    <!-- charge level -->
+    <path d="M44 73 H78 V95 Q78 99 74 99 H48 Q44 99 44 95 Z" fill="#1f9bd7"/>
+
+    <!-- charge bolt -->
+    <polygon points="65,53 52,79 60,79 56,98 75,71 64,71 70,53" fill="#e63946" stroke="#0b3a5e" stroke-width="1.6" stroke-linejoin="round"/>
+
+    <!-- compass rose -->
+    <g transform="translate(104 104)">
+      <circle r="11" fill="#0b3a5e" fill-opacity="0.7" stroke="#bee3f4" stroke-width="0.8"/>
+      <polygon points="0,-9 2.2,0 0,0" fill="#e63946"/>
+      <polygon points="0,-9 -2.2,0 0,0" fill="#b5232f"/>
+      <polygon points="0,9 2.2,0 0,0" fill="#e2e8f0"/>
+      <polygon points="0,9 -2.2,0 0,0" fill="#cbd5e1"/>
+      <circle r="1.1" fill="#e2e8f0"/>
+    </g>
+  </g>
+</svg>
