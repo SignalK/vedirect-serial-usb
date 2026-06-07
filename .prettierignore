@@ -1,0 +1,11 @@
+node_modules
+coverage
+.nyc_output
+.claude
+package-lock.json
+dist
+reports
+.stryker-tmp
+
+# Legacy postinstall migration, pending removal
+migration.js
