@@ -53,7 +53,7 @@
     "url": "https://github.com/SignalK/vedirect-serial-usb"
   },
   "dependencies": {
-    "@serialport/parser-delimiter": "^11.0.0",
+    "@serialport/parser-delimiter": "^13.0.0",
     "debug": "^4.4.3",
     "serialport": "^11.0.0"
   },
