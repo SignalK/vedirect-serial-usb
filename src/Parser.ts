@@ -23,6 +23,7 @@ import type {
   UnitId,
   VEDirectConnection
 } from './types'
+import { PLUGIN_ID } from './constants'
 
 /** Parser configuration after merging caller options with defaults. */
 interface ParserOptions extends PluginOptions {
@@ -380,14 +381,14 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
       context: 'vessels.self',
       updates: [
         {
-          source: {
-            label: '@signalk/vedirect-serial-usb',
-            type: 'VE.direct',
-            // Per-connection discriminator. The host combines it with the
-            // provider id into a distinct `$source` (e.g. vedirect-signalk.0),
-            // so several VE.Direct devices remain individually addressable.
-            src: String(connectionIndex)
-          },
+          // Set the Signal K source ref as a bare string rather than a
+          // structured `source` object. signalk-server reads any `source.src`
+          // as an NMEA 2000 device address, so a VE.Direct delta carrying one
+          // would corrupt the server's `sources` tree with bogus
+          // `sources.*.n2k.pgns` nodes. A plain `$source` sidesteps that while
+          // keeping each connection individually addressable:
+          // `vedirect-signalk.0`, `vedirect-signalk.1`, ...
+          $source: `${PLUGIN_ID}.${connectionIndex}`,
           timestamp: new Date().toISOString(),
           values
         }

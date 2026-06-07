@@ -524,18 +524,14 @@ describe('VEDirectParser - generateDelta()', () => {
     expect(deltas).to.have.lengthOf(1)
     const update = deltas[0]!.updates[0]!
     expect(deltas[0]!.context).to.equal('vessels.self')
-    expect(update.source).to.deep.equal({
-      label: '@signalk/vedirect-serial-usb',
-      type: 'VE.direct',
-      src: '0'
-    })
+    expect(update.$source).to.equal('vedirect-signalk.0')
     expect(new Date(update.timestamp).toISOString()).to.equal(update.timestamp)
     expect(update.values).to.deep.equal([
       { path: 'electrical.batteries.House.voltage', value: 12.34 }
     ])
   })
 
-  it('stamps the source with the connection index so devices stay distinct', () => {
+  it('stamps a per-connection $source so devices stay distinct', () => {
     const parser = new VEDirectParser(CONNECTION)
     const deltas: SKDelta[] = []
     parser.on('delta', (d: SKDelta) => deltas.push(d))
@@ -544,9 +540,9 @@ describe('VEDirectParser - generateDelta()', () => {
     parser.generateDelta(0)
     parser.generateDelta(1)
 
-    expect(deltas.map((d) => d.updates[0]!.source.src)).to.deep.equal([
-      '0',
-      '1'
+    expect(deltas.map((d) => d.updates[0]!.$source)).to.deep.equal([
+      'vedirect-signalk.0',
+      'vedirect-signalk.1'
     ])
   })
 })

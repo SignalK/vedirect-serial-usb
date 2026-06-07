@@ -66,14 +66,10 @@ describe('integration: real BlueSolar MPPT 75/10 capture', () => {
     return found!.value
   }
 
-  it('emits a single self-context delta tagged as a VE.direct source', () => {
+  it('emits a single self-context delta with a per-connection $source', () => {
     expect(delta.context).to.equal('vessels.self')
     expect(delta.updates).to.have.lengthOf(1)
-    expect(delta.updates[0]!.source).to.deep.equal({
-      label: '@signalk/vedirect-serial-usb',
-      type: 'VE.direct',
-      src: '0'
-    })
+    expect(delta.updates[0]!.$source).to.equal('vedirect-signalk.0')
   })
 
   it('decodes every path-mapped field with the correct unit conversion', () => {

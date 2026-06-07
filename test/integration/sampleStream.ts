@@ -122,7 +122,7 @@ describe('integration: noisy BMV-702 stream', () => {
       expect(delta.context).to.equal('vessels.self')
       expect(delta.updates).to.have.lengthOf(1)
       const update = delta.updates[0]!
-      expect(update.source.type).to.equal('VE.direct')
+      expect(update.$source).to.equal('vedirect-signalk.0')
       expect(update.values.length).to.be.greaterThan(0)
       for (const v of update.values) {
         expect(v.path, 'every value has a non-empty path')
