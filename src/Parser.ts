@@ -20,6 +20,7 @@ import type {
   PluginOptions,
   SKDelta,
   StoredField,
+  UnitId,
   VEDirectConnection
 } from './types'
 
@@ -32,7 +33,6 @@ interface ParserOptions extends PluginOptions {
   auxBatt: string
   bmv: string
   solar: string
-  overrideUnitId?: string
 }
 
 const defaults = {
@@ -65,7 +65,7 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
     this.sum = 0
   }
 
-  addChunk(buf: Buffer, items: number): void {
+  addChunk(buf: Buffer, connectionIndex: number): void {
     if (!Buffer.isBuffer(buf)) {
       this.warn('addChunk: incoming data is not a buffer: ' + typeof buf)
       return
@@ -81,7 +81,7 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
     if (chunk.toLowerCase().includes('checksum')) {
       // Last line of block. Verify checksum of block in cache and parse
       // line-by-line if checksum is correct.
-      this._verifyCacheAndParse(items)
+      this._verifyCacheAndParse(connectionIndex)
     }
   }
 
@@ -119,8 +119,8 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
     return Object.assign({}, this.data)
   }
 
-  private _verifyCacheAndParse(items: number): void {
-    const conn = this.options.vedirect?.[items]
+  private _verifyCacheAndParse(connectionIndex: number): void {
+    const conn = this.options.vedirect?.[connectionIndex]
 
     // Verify checksum unless ignoreChecksum is explicitly true.
     if (conn?.ignoreChecksum !== true && this.sum % 256 !== 0) {
@@ -142,7 +142,7 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
 
     this.cache = ''
     this.sum = 0
-    this.generateDelta(items)
+    this.generateDelta(connectionIndex)
   }
 
   private _parse(): void {
@@ -339,10 +339,10 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
     return this.options.productIds[key] ?? 'Unknown'
   }
 
-  generateDelta(items: number): void {
+  generateDelta(connectionIndex: number): void {
     const values = Object.keys(this.data)
       .map((name) => {
-        const path = this.getPath(name, items)
+        const path = this.getPath(name, connectionIndex)
         const entry = this.data[name]
         if (path === null || entry === undefined) {
           return null
@@ -376,45 +376,44 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
     this.emit('delta', delta)
   }
 
-  getPath(name: string, items: number): string | null {
-    const conn: VEDirectConnection | undefined = this.options.vedirect?.[items]
+  getPath(name: string, connectionIndex: number): string | null {
+    const field = Object.values(this.fields).find(
+      (f) => f.name === name && f.path !== undefined
+    )
+    if (!field?.path) {
+      return null
+    }
+    if (field.unitId === undefined) {
+      return field.path
+    }
 
-    return Object.keys(this.fields).reduce<string | null>((found, key) => {
-      const field = this.fields[key]
-      if (!field || field.name !== name || field.path === undefined) {
-        return found
-      }
+    const conn = this.options.vedirect?.[connectionIndex]
+    return field.path.replace('*', this.resolveUnitId(field.unitId, conn))
+  }
 
-      let path = field.path
-
-      if (field.unitId !== undefined) {
-        let unitID = ''
-
-        if (conn) {
-          if (field.unitId === 'mainBatt') {
-            unitID = conn.mainBatt
-          } else if (field.unitId === 'auxBatt') {
-            unitID = conn.auxBatt
-          } else if (field.unitId === 'bmv') {
-            unitID = conn.bmv
-          } else if (field.unitId === 'solar') {
-            unitID = conn.solar
-          }
-        }
-
-        if (!unitID && typeof this.options.defaultUnitId === 'string') {
-          unitID = this.options.defaultUnitId
-        }
-
-        if (typeof this.options.overrideUnitId === 'string') {
-          unitID = this.options.overrideUnitId
-        }
-
-        path = path.replace('*', unitID)
-      }
-
-      return path
-    }, null)
+  /**
+   * Resolves a field's unit id to the configured device name. The four
+   * configurable units come from the connection; aux2Batt/inverter have no
+   * config slot and use defaultUnitId. The switch is exhaustive over UnitId,
+   * so adding a unit without handling it here is a compile error.
+   */
+  private resolveUnitId(
+    unitId: UnitId,
+    conn: VEDirectConnection | undefined
+  ): string {
+    switch (unitId) {
+      case 'mainBatt':
+        return conn?.mainBatt || this.options.defaultUnitId
+      case 'auxBatt':
+        return conn?.auxBatt || this.options.defaultUnitId
+      case 'bmv':
+        return conn?.bmv || this.options.defaultUnitId
+      case 'solar':
+        return conn?.solar || this.options.defaultUnitId
+      case 'aux2Batt':
+      case 'inverter':
+        return this.options.defaultUnitId
+    }
   }
 
   warn(message: string): void {

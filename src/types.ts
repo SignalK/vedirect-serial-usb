@@ -99,11 +99,27 @@ export type FieldValue = (
 
 export type FieldType = 'metric' | 'ratio' | 'text' | 'boolean' | 'count'
 
+/**
+ * Identifies which configured device name fills a field path's `*` placeholder.
+ * `mainBatt`/`auxBatt`/`bmv`/`solar` map to the per-connection config;
+ * `aux2Batt`/`inverter` have no config slot and fall back to the parser's
+ * `defaultUnitId`. Keeping this a union (rather than `string`) ties the field
+ * table to the resolver in `getPath`: adding a new unit here forces the switch
+ * there to handle it.
+ */
+export type UnitId =
+  | 'mainBatt'
+  | 'auxBatt'
+  | 'aux2Batt'
+  | 'bmv'
+  | 'solar'
+  | 'inverter'
+
 /** A field definition: how to name, place and convert one VE.Direct token. */
 export interface Field {
   name: string
   path?: string
-  unitId?: string
+  unitId?: UnitId
   units?: string
   type?: FieldType
   value?: FieldValue
@@ -117,7 +133,7 @@ export interface StoredField {
   name: string
   value: number | string
   path?: string
-  unitId?: string
+  unitId?: UnitId
   units?: string
   type?: FieldType
 }

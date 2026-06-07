@@ -3,7 +3,7 @@
  *
  * Opens a serial port per connection index, splits the stream on `\r`
  * (VE.Direct line terminator) and feeds each line into the matching parser.
- * Ports are tracked by `items` (the connection index) so that several
+ * Ports are tracked by `connectionIndex` (the connection index) so that several
  * configured connections can run side by side.
  */
 import { SerialPort } from 'serialport'
@@ -18,13 +18,13 @@ export function open(
   device: string,
   parser: VEDirectParser[],
   debug: DebugFn,
-  items: number
+  connectionIndex: number
 ): void {
-  const existing = port[items]
+  const existing = port[connectionIndex]
   if (existing !== undefined) {
     try {
       existing.close()
-      port[items] = undefined
+      port[connectionIndex] = undefined
     } catch {
       // best-effort: the port may already be gone
     }
@@ -33,7 +33,7 @@ export function open(
   debug(`Serial: connecting to ${device}`)
 
   const sp = new SerialPort({ path: device, baudRate: 19200 })
-  port[items] = sp
+  port[connectionIndex] = sp
 
   sp.on('open', () => {
     debug(`Connected to ${device}`)
@@ -46,11 +46,11 @@ export function open(
   const parsed = sp.pipe(
     new DelimiterParser({ delimiter: '\r', includeDelimiter: true })
   )
-  delim[items] = parsed
+  delim[connectionIndex] = parsed
 
   parsed.on('data', (chunk: Buffer) => {
     // Chunk is a node.js Buffer
-    parser[items]?.addChunk(chunk, items)
+    parser[connectionIndex]?.addChunk(chunk, connectionIndex)
     debug(`${chunk}`)
   })
 
@@ -59,12 +59,12 @@ export function open(
   })
 }
 
-export function close(debug: DebugFn, items: number): void {
-  const sp = port[items]
+export function close(debug: DebugFn, connectionIndex: number): void {
+  const sp = port[connectionIndex]
   if (sp !== undefined) {
     try {
       sp.close()
-      port[items] = undefined
+      port[connectionIndex] = undefined
       debug('Serial port closed')
     } catch {
       // best-effort
