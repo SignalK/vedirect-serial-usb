@@ -90,11 +90,15 @@ export interface Plugin {
   schema: object
 }
 
-/** A Signal K delta message emitted for a parsed VE.Direct block. */
+/** A Signal K delta message emitted for a parsed VE.Direct block.
+ *
+ * The source is carried as a `$source` ref string (`vedirect-signalk.<index>`)
+ * rather than a structured `source` object: a `source.src` field would make
+ * signalk-server misclassify the stream as NMEA 2000. See src/Parser.ts. */
 export interface SKDelta {
   context: string
   updates: Array<{
-    source: { label: string; type: string; src: string }
+    $source: string
     timestamp: string
     values: Array<{ path: string; value: number | string | null }>
   }>
