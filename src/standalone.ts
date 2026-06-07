@@ -51,6 +51,10 @@ class VEDirect extends EventEmitter {
         this.emit(kind, data)
       },
       debug: (msg: string) => this.debug(msg),
+      // The standalone library has no PUT transport, so relay handler
+      // registrations are accepted and dropped; the returned no-op unregister
+      // keeps start()/stop() symmetric with the server host.
+      registerPutHandler: () => () => {},
       options
     }
 

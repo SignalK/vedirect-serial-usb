@@ -62,6 +62,29 @@ Set up the appropriate device on the settings page of this plugin in the Signal 
 
 - Give each device unique SK paths
 
+## BMV relay control
+
+For BMV-7xx battery monitors on a **serial** connection, the built-in relay is
+exposed as a writable Signal K path so other plugins can switch it:
+
+```
+electrical.batteries.<bmv>.relay
+```
+
+where `<bmv>` is the BMV name configured for the connection. Send a PUT request
+with a value of `1`/`true` to close the relay or `0`/`false` to open it. The
+plugin reports an error if the value is out of range or the serial port is not
+open, rather than silently doing nothing.
+
+The writable path exists only for a serial connection whose **device type is a
+battery monitor** (not a solar charger) and that has a **BMV name** configured;
+without a name there is nothing to anchor the path to, so no writable path is
+registered. A successful response means the command was written to the port, not
+that the relay is confirmed switched: the BMV sends no acknowledgement, and it
+acts on the command only when its relay is set to **remote control** on the BMV
+itself. Relay control is only available over serial, as it depends on writing
+back to the VE.Direct port.
+
 ## Usage as a library
 
 It's possible to use this plugin as a library, in other Node.js code. This feature simply wraps the plugin in an easy-to-consume manner, so functionality is identical. Example:

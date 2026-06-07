@@ -12,6 +12,8 @@ import { requireFresh } from '../helpers/moduleStub'
 import type {
   Plugin,
   PluginOptions,
+  PutHandler,
+  PutResult,
   SignalKApp,
   SKDelta,
   VEDirectConnection
@@ -28,22 +30,28 @@ function makeStubs(): {
   tcp: Record<string, unknown>
   calls: {
     serialOpen: Array<{ device: string; items: number }>
+    serialWrite: Array<{ message: string; items: number }>
     udpListen: Array<{ port: number; items: number }>
     tcpConnect: Array<{ host: string; port: number; items: number }>
     serialClose: number[]
     udpClose: number[]
     tcpClose: number[]
   }
+  // Controls what the serial.write spy returns, so a test can simulate a port
+  // that is open (true) or not open (false).
+  control: { writeReturns: boolean }
   captured: () => { parser: ParserClass[]; index: number } | null
 } {
   const calls = {
     serialOpen: [] as Array<{ device: string; items: number }>,
+    serialWrite: [] as Array<{ message: string; items: number }>,
     udpListen: [] as Array<{ port: number; items: number }>,
     tcpConnect: [] as Array<{ host: string; port: number; items: number }>,
     serialClose: [] as number[],
     udpClose: [] as number[],
     tcpClose: [] as number[]
   }
+  const control = { writeReturns: true }
   let captured: { parser: ParserClass[]; index: number } | null = null
   const grab = (parser: ParserClass[], index: number): void => {
     captured = { parser, index }
@@ -51,6 +59,7 @@ function makeStubs(): {
 
   return {
     calls,
+    control,
     captured: () => captured,
     serial: {
       open: (
@@ -62,7 +71,11 @@ function makeStubs(): {
         calls.serialOpen.push({ device, items })
         grab(parser, items)
       },
-      close: (_d: unknown, items: number) => calls.serialClose.push(items)
+      close: (_d: unknown, items: number) => calls.serialClose.push(items),
+      write: (message: string, items: number) => {
+        calls.serialWrite.push({ message, items })
+        return control.writeReturns
+      }
     },
     udp: {
       listen: (
@@ -92,18 +105,51 @@ function makeStubs(): {
   }
 }
 
+/** A captured PUT registration plus the unregister callback handed back to the
+ *  plugin, so tests can both invoke the handler and assert teardown. */
+interface PutRegistration {
+  context: string
+  path: string
+  handler: PutHandler
+  unregister: () => void
+  unregistered: boolean
+}
+
 function makeApp(): {
   app: SignalKApp
   messages: Array<{ id: string; delta: SKDelta }>
+  debugLogs: string[]
+  puts: PutRegistration[]
 } {
   const messages: Array<{ id: string; delta: SKDelta }> = []
+  const debugLogs: string[] = []
+  const puts: PutRegistration[] = []
   return {
     app: {
       handleMessage: (id: string, delta: SKDelta) =>
         messages.push({ id, delta }),
-      debug: () => {}
+      debug: (msg: string) => debugLogs.push(msg),
+      registerPutHandler: (
+        context: string,
+        path: string,
+        handler: PutHandler
+      ) => {
+        const registration: PutRegistration = {
+          context,
+          path,
+          handler,
+          unregister: () => {
+            registration.unregistered = true
+          },
+          unregistered: false
+        }
+        puts.push(registration)
+        return registration.unregister
+      }
     },
-    messages
+    messages,
+    debugLogs,
+    puts
   }
 }
 
@@ -111,6 +157,8 @@ function loadPlugin(): {
   plugin: Plugin
   stubs: ReturnType<typeof makeStubs>
   messages: Array<{ id: string; delta: SKDelta }>
+  debugLogs: string[]
+  puts: PutRegistration[]
 } {
   const stubs = makeStubs()
   const createPlugin = requireFresh<PluginFactory>('src/index', {
@@ -118,8 +166,8 @@ function loadPlugin(): {
     'src/udp': stubs.udp,
     'src/tcp': stubs.tcp
   })
-  const { app, messages } = makeApp()
-  return { plugin: createPlugin(app), stubs, messages }
+  const { app, messages, debugLogs, puts } = makeApp()
+  return { plugin: createPlugin(app), stubs, messages, debugLogs, puts }
 }
 
 function conn(over: Partial<VEDirectConnection>): VEDirectConnection {
@@ -247,5 +295,250 @@ describe('plugin factory', () => {
     const { plugin, stubs } = loadPlugin()
     expect(() => plugin.stop()).to.not.throw()
     expect(stubs.calls.serialClose).to.have.lengthOf(0)
+  })
+})
+
+describe('relay PUT handler', () => {
+  // Starts a single serial connection and returns the captured registration so
+  // the handler can be invoked directly. bmv defaults to 'bmv' (see conn()), so
+  // the relay path is anchored unless a test overrides it.
+  function startSerial(over: Partial<VEDirectConnection> = {}): {
+    stubs: ReturnType<typeof makeStubs>
+    debugLogs: string[]
+    reg: PutRegistration
+  } {
+    const { plugin, stubs, debugLogs, puts } = loadPlugin()
+    plugin.start({
+      vedirect: [
+        conn({ device: 'Serial', connection: '/dev/ttyUSB0', ...over })
+      ]
+    })
+    expect(puts, 'a relay handler was registered').to.have.lengthOf(1)
+    return { stubs, debugLogs, reg: puts[0]! }
+  }
+
+  it('registers a writable relay on the bmv path for a serial connection', () => {
+    const { reg } = startSerial({ bmv: 'house' })
+    expect(reg.context).to.equal('vessels.self')
+    expect(reg.path).to.equal('electrical.batteries.house.relay')
+  })
+
+  it('registers no relay handler for UDP or TCP connections', () => {
+    const { plugin, puts } = loadPlugin()
+    plugin.start({
+      vedirect: [
+        conn({ device: 'UDP', port: 7878 }),
+        conn({ device: 'TCP', connection: '10.0.0.5', port: 2000 })
+      ]
+    })
+    expect(puts).to.have.lengthOf(0)
+  })
+
+  it('registers no relay handler, and logs, when the bmv name is blank', () => {
+    const { plugin, puts, debugLogs } = loadPlugin()
+    plugin.start({
+      vedirect: [
+        conn({ device: 'Serial', connection: '/dev/ttyUSB0', bmv: '' })
+      ]
+    })
+    expect(puts).to.have.lengthOf(0)
+    expect(debugLogs.some((m) => m.includes('relay control disabled'))).to.be
+      .true
+  })
+
+  it('registers no relay handler when the bmv name is absent', () => {
+    // A config persisted before the bmv field existed deserializes without it.
+    const { plugin, puts } = loadPlugin()
+    const c = conn({ device: 'Serial', connection: '/dev/ttyUSB0' })
+    delete (c as { bmv?: string }).bmv
+    plugin.start({ vedirect: [c] })
+    expect(puts).to.have.lengthOf(0)
+  })
+
+  it('registers no relay handler, and logs, for a solar charger', () => {
+    // The relay lives on the BMV-7xx; a solar charger has no such relay, so even
+    // with a BMV name set it must not expose a writable path that would write
+    // register 0x034E to an MPPT.
+    const { plugin, puts, debugLogs } = loadPlugin()
+    plugin.start({
+      vedirect: [
+        conn({
+          device: 'Serial',
+          connection: '/dev/ttyUSB0',
+          deviceType: 'Solar charger',
+          bmv: 'house'
+        })
+      ]
+    })
+    expect(puts).to.have.lengthOf(0)
+    expect(debugLogs.some((m) => m.includes('solar charger'))).to.be.true
+  })
+
+  it('registers a relay handler for an explicit battery monitor', () => {
+    const { reg } = startSerial({ deviceType: 'Battery monitor', bmv: 'house' })
+    expect(reg.path).to.equal('electrical.batteries.house.relay')
+  })
+
+  it('registers only one relay handler when two serial connections share a bmv name', () => {
+    // Both serial connections resolve to electrical.batteries.bmv.relay; the host
+    // would keep a single handler, so a PUT could drive the wrong port. The second
+    // registration is refused and logged rather than silently shadowing the first.
+    const { plugin, puts, debugLogs } = loadPlugin()
+    plugin.start({
+      vedirect: [
+        conn({ device: 'Serial', connection: '/dev/ttyUSB0', bmv: 'bmv' }),
+        conn({ device: 'Serial', connection: '/dev/ttyUSB1', bmv: 'bmv' })
+      ]
+    })
+    expect(puts).to.have.lengthOf(1)
+    expect(puts[0]!.path).to.equal('electrical.batteries.bmv.relay')
+    expect(debugLogs.some((m) => m.includes('already registered'))).to.be.true
+  })
+
+  it('frees the relay path on stop() so a restart can re-register it', () => {
+    const { plugin, puts } = loadPlugin()
+    const options = {
+      vedirect: [
+        conn({ device: 'Serial', connection: '/dev/ttyUSB0', bmv: 'bmv' })
+      ]
+    }
+    plugin.start(options)
+    plugin.stop()
+    plugin.start(options)
+    // Two registrations across the restart: the second start is not mistaken for
+    // a duplicate, proving stop() released the claimed path.
+    expect(puts).to.have.lengthOf(2)
+    expect(puts[1]!.path).to.equal('electrical.batteries.bmv.relay')
+  })
+
+  it('writes the relay-on command and reports success for value 1', () => {
+    const { stubs, debugLogs, reg } = startSerial()
+    const result = reg.handler(
+      'vessels.self',
+      reg.path,
+      1,
+      () => {}
+    ) as PutResult
+    expect(stubs.calls.serialWrite).to.deep.equal([
+      { message: ':84E030001FB\n', items: 0 }
+    ])
+    expect(result.state).to.equal('COMPLETED')
+    expect(result.statusCode).to.equal(200)
+    // The reply and the log say "sent", not "switched": the BMV does not ack.
+    expect(result.message).to.contain('sent')
+    expect(debugLogs.some((m) => m.includes('on command sent'))).to.be.true
+  })
+
+  it('accepts boolean true as relay-on', () => {
+    const { stubs, reg } = startSerial()
+    reg.handler('vessels.self', reg.path, true, () => {})
+    expect(stubs.calls.serialWrite[0]!.message).to.equal(':84E030001FB\n')
+  })
+
+  it('writes the relay-off command and reports success for value 0', () => {
+    const { stubs, reg } = startSerial()
+    const result = reg.handler(
+      'vessels.self',
+      reg.path,
+      0,
+      () => {}
+    ) as PutResult
+    expect(stubs.calls.serialWrite).to.deep.equal([
+      { message: ':84E030000FC\n', items: 0 }
+    ])
+    expect(result.state).to.equal('COMPLETED')
+    expect(result.statusCode).to.equal(200)
+    expect(result.message).to.contain('sent')
+  })
+
+  it('accepts boolean false as relay-off', () => {
+    const { stubs, reg } = startSerial()
+    reg.handler('vessels.self', reg.path, false, () => {})
+    expect(stubs.calls.serialWrite[0]!.message).to.equal(':84E030000FC\n')
+  })
+
+  it('rejects out-of-range, non-numeric and nullish values with 400, logs, and does not write', () => {
+    const { stubs, debugLogs, reg } = startSerial()
+    // Only 1/0/true/false are valid; everything else (negative, other numbers,
+    // numeric strings, null/undefined/NaN, objects) must be refused untouched.
+    const invalid: unknown[] = [-1, 2, '0', '1', null, undefined, NaN, {}]
+    for (const value of invalid) {
+      const result = reg.handler(
+        'vessels.self',
+        reg.path,
+        value,
+        () => {}
+      ) as PutResult
+      const label = `value ${JSON.stringify(value)}`
+      expect(result.state, label).to.equal('COMPLETED')
+      expect(result.statusCode, label).to.equal(400)
+      expect(result.message, label).to.contain('Invalid relay value')
+      // The offending path is echoed back so the caller sees which path failed.
+      expect(result.message, label).to.contain(reg.path)
+    }
+    expect(stubs.calls.serialWrite).to.have.lengthOf(0)
+    // Every rejection is logged, so a caller repeatedly sending bad values is
+    // diagnosable from the plugin log rather than silently ignored.
+    expect(debugLogs.filter((m) => m.includes('rejected'))).to.have.lengthOf(
+      invalid.length
+    )
+  })
+
+  it('reports failure when the serial port is not open', () => {
+    const { stubs, debugLogs, reg } = startSerial()
+    stubs.control.writeReturns = false // simulate a closed/absent port
+    const result = reg.handler(
+      'vessels.self',
+      reg.path,
+      1,
+      () => {}
+    ) as PutResult
+    expect(stubs.calls.serialWrite, 'write was attempted').to.have.lengthOf(1)
+    expect(result.state).to.equal('COMPLETED')
+    expect(result.statusCode).to.equal(503)
+    expect(result.message).to.contain('not open')
+    expect(debugLogs.some((m) => m.includes('not open'))).to.be.true
+  })
+
+  it('registers the relay handler for a legacy serial config', () => {
+    const { plugin, puts } = loadPlugin()
+    plugin.start({ device: '/dev/ttyUSB0' })
+    expect(puts).to.have.lengthOf(1)
+    expect(puts[0]!.path).to.equal('electrical.batteries.bmv.relay')
+  })
+
+  it('unregisters the relay handler on stop()', () => {
+    const { plugin, puts } = loadPlugin()
+    plugin.start({
+      vedirect: [conn({ device: 'Serial', connection: '/dev/ttyUSB0' })]
+    })
+    expect(puts[0]!.unregistered).to.be.false
+    plugin.stop()
+    expect(puts[0]!.unregistered).to.be.true
+  })
+
+  // Pins the per-connection index wiring: with the only serial+bmv connection at
+  // a non-zero index, the write must target that index (not a hardcoded 0) and
+  // stop() must unregister exactly that connection, leaving the non-serial slot
+  // (which registered nothing) untouched.
+  it('routes the write to the registering connection index and tears down only that one', () => {
+    const { plugin, stubs, puts } = loadPlugin()
+    plugin.start({
+      vedirect: [
+        conn({ device: 'UDP', port: 7878 }),
+        conn({ device: 'Serial', connection: '/dev/ttyUSB1', bmv: 'house' })
+      ]
+    })
+
+    expect(puts, 'only the serial connection registers').to.have.lengthOf(1)
+    expect(puts[0]!.path).to.equal('electrical.batteries.house.relay')
+
+    puts[0]!.handler('vessels.self', puts[0]!.path, 1, () => {})
+    expect(stubs.calls.serialWrite).to.deep.equal([
+      { message: ':84E030001FB\n', items: 1 }
+    ])
+
+    plugin.stop()
+    expect(puts[0]!.unregistered).to.be.true
   })
 })
