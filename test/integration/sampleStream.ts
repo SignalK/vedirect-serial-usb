@@ -138,4 +138,22 @@ describe('integration: noisy BMV-702 stream', () => {
       'malformed lines produce warnings'
     ).to.be.greaterThan(0)
   })
+
+  it('clears time-to-go to null end-to-end when the BMV reports -1', () => {
+    // The stream's only well-formed TTG line is "TTG\t-1" (infinite). Through
+    // the full addChunk -> checksum -> parse -> generateDelta pipeline that must
+    // surface as an explicit null clearing the path, never -60 or a stale value.
+    const timeRemaining = deltas.flatMap((d) =>
+      d.updates[0]!.values.filter(
+        (v) => v.path === 'electrical.batteries.House.capacity.timeRemaining'
+      )
+    )
+    expect(
+      timeRemaining.length,
+      'time-to-go reached a delta'
+    ).to.be.greaterThan(0)
+    for (const v of timeRemaining) {
+      expect(v.value, 'infinite time-to-go is cleared to null').to.equal(null)
+    }
+  })
 })

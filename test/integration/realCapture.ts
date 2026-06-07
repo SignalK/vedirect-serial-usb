@@ -43,7 +43,7 @@ const CAPTURE: ReadonlyArray<readonly [string, string]> = [
 describe('integration: real BlueSolar MPPT 75/10 capture', () => {
   let parser: VEDirectParser
   let delta: SKDelta
-  let values: Array<{ path: string; value: number | string }>
+  let values: Array<{ path: string; value: number | string | null }>
 
   before(() => {
     const run = runBlock(toBlock(CAPTURE))
@@ -53,7 +53,7 @@ describe('integration: real BlueSolar MPPT 75/10 capture', () => {
     values = delta.updates[0]!.values
   })
 
-  const valueAt = (path: string): number | string => {
+  const valueAt = (path: string): number | string | null => {
     const found = values.find((v) => v.path === path)
     expect(found, `expected a value at ${path}`).to.not.equal(undefined)
     return found!.value
@@ -70,8 +70,8 @@ describe('integration: real BlueSolar MPPT 75/10 capture', () => {
 
   it('decodes every path-mapped field with the correct unit conversion', () => {
     // Only fields with a Signal K path appear in the delta; FW, SER#, HSDS and
-    // the product id/name are decoded but have no path, and ERR 0 maps to null
-    // (no error) so it is skipped.
+    // the product id/name are decoded but have no path, and ERR 0 maps to
+    // undefined (no error) so it is skipped.
     expect(values).to.have.lengthOf(12)
 
     // Battery (mainBatt -> "House"): mV and mA conversions.
