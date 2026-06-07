@@ -73,7 +73,7 @@ const consumer = new VEDirect({
   ignoreChecksum: true,
   mainBatt: 'House',
   auxBatt: 'Starter',
-  solar: 'Main',
+  solar: 'Main'
 })
 
 consumer.on('delta', (delta) => console.log('[onDelta]', delta))

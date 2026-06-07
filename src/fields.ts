@@ -1,80 +1,51 @@
+/**
+ * VE.Direct field definitions.
+ *
+ * Maps each VE.Direct text-protocol label (e.g. `V`, `SOC`, `PID`) to how it
+ * is named, where it lands in the Signal K tree (`path`, with `*` replaced by
+ * the configured unit id) and how its raw token is converted. A field with no
+ * `value` function stores the raw string; a function returning null/undefined
+ * is skipped.
+ */
+import type { FieldMap } from './types'
+
+/** Numeric converters shared across fields. Each accepts the raw token (a
+ *  string from the wire, occasionally an already-numeric value) and returns
+ *  the scaled number, or null when the token is not a number. */
 const common = {
-  number (value) {
-    if (typeof value !== 'number') {
-      value = parseInt(value, 10)
-    }
-
-    if (isNaN(value)) {
-      return null
-    }
-
-    return value
+  number(value: string | number): number | null {
+    const n = typeof value === 'number' ? value : parseInt(value, 10)
+    return isNaN(n) ? null : n
   },
 
-  // 0.01 kWh
-  kWh (value) {
-    if (typeof value !== 'number') {
-      value = parseInt(value, 10)
-    }
-
-    if (isNaN(value)) {
-      return null
-    }
-
-    // value is in units of 0.01 kWh each
-    return value / 100
+  // value is in units of 0.01 kWh each
+  kWh(value: string | number): number | null {
+    const n = common.number(value)
+    return n === null ? null : n / 100
   },
 
-  mV (value) {
-    if (typeof value !== 'number') {
-      value = parseInt(value, 10)
-    }
-
-    if (isNaN(value)) {
-      return null
-    }
-
-    return value / 1000
+  mV(value: string | number): number | null {
+    const n = common.number(value)
+    return n === null ? null : n / 1000
   },
 
-  mA (value) {
-    if (typeof value !== 'number') {
-      value = parseInt(value, 10)
-    }
-
-    if (isNaN(value)) {
-      return null
-    }
-
-    return Math.floor(value / 10) / 100
+  mA(value: string | number): number | null {
+    const n = common.number(value)
+    return n === null ? null : Math.floor(n / 10) / 100
   },
 
-  mAh (value) {
-    if (typeof value !== 'number') {
-      value = parseInt(value, 10)
-    }
-
-    if (isNaN(value)) {
-      return null
-    }
-
-    return Math.floor(value / 10) / 100 * 3600
+  mAh(value: string | number): number | null {
+    const n = common.number(value)
+    return n === null ? null : (Math.floor(n / 10) / 100) * 3600
   },
 
-  promille (value) {
-    if (typeof value !== 'number') {
-      value = parseInt(value, 10)
-    }
-
-    if (isNaN(value)) {
-      return null
-    }
-
-    return value / 1000
+  promille(value: string | number): number | null {
+    const n = common.number(value)
+    return n === null ? null : n / 1000
   }
 }
 
-module.exports = {
+const fields: FieldMap = {
   V: {
     name: 'mainBattVoltage',
     path: 'electrical.batteries.*.voltage',
@@ -171,10 +142,7 @@ module.exports = {
     path: 'electrical.solar.*.load',
     unitId: 'solar',
     type: 'text',
-    value (value) {
-      value = value.toLowerCase()
-      return value
-    }
+    value: (value) => value.toLowerCase()
   },
   T: {
     name: 'batteryTemperature',
@@ -182,16 +150,9 @@ module.exports = {
     unitId: 'mainBatt',
     units: 'K',
     type: 'metric',
-    value (value, instance) {
-      if (typeof value !== 'number') {
-        value = parseInt(value, 10)
-      }
-
-      if (isNaN(value)) {
-        return null
-      }
-
-      return (value + 273.15)
+    value: (value) => {
+      const n = common.number(value)
+      return n === null ? null : n + 273.15
     }
   },
   P: {
@@ -219,13 +180,10 @@ module.exports = {
     name: 'timeToGo',
     path: 'electrical.batteries.*.capacity.timeRemaining',
     unitId: 'mainBatt',
-    value: value => {
-      value = common.number(value)
-      if (value === null) {
-        return null
-      }
+    value: (value) => {
+      const n = common.number(value)
       // value is minutes
-      return value * 60
+      return n === null ? null : n * 60
     },
     units: 's',
     type: 'metric'
@@ -233,27 +191,19 @@ module.exports = {
   ALARM: {
     name: 'alarm',
     type: 'boolean',
-    value (value) {
-      value = value.toUpperCase()
-      return value === 'ON' ? 1 : 0
-    }
+    value: (value) => (value.toUpperCase() === 'ON' ? 1 : 0)
   },
   RELAY: {
     name: 'relay',
     type: 'boolean',
     path: 'electrical.batteries.*.relay',
     unitId: 'bmv',
-    value (value) {
-      value = value.toUpperCase()
-      return value === 'ON' ? 1 : 0
-    }
+    value: (value) => (value.toUpperCase() === 'ON' ? 1 : 0)
   },
   AR: {
     name: 'alarmReason',
     type: 'text',
-    value (value, instance) {
-      return instance.getAlarmReason(value)
-    }
+    value: (value, instance) => instance.getAlarmReason(value)
   },
   H1: {
     name: 'depthOfDeepestDischarge',
@@ -369,7 +319,7 @@ module.exports = {
   H20: {
     name: 'yieldToday',
     path: 'electrical.solar.*.yieldToday',
-    unitId: 'solar',   
+    unitId: 'solar',
     value: common.kWh,
     units: 'J',
     type: 'metric'
@@ -377,7 +327,7 @@ module.exports = {
   H21: {
     name: 'maximumPowerToday',
     path: 'electrical.solar.*.maximumPowerToday',
-    unitId: 'solar',  
+    unitId: 'solar',
     value: common.number,
     units: 'W',
     type: 'metric'
@@ -385,7 +335,7 @@ module.exports = {
   H22: {
     name: 'yieldYesterday',
     path: 'electrical.solar.*.yieldYesterday',
-    unitId: 'solar', 
+    unitId: 'solar',
     value: common.kWh,
     units: 'J',
     type: 'metric'
@@ -403,18 +353,14 @@ module.exports = {
     path: 'electrical.batteries.*.errorCode',
     unitId: 'mainBatt',
     type: 'text',
-    value (value, instance) {
-      return instance.getErrorString(value)
-    }
+    value: (value, instance) => instance.getErrorString(value)
   },
   CS: {
     name: 'stateOfOperation',
     path: 'electrical.charger.*.chargingMode',
     unitId: 'mainBatt',
     type: 'text',
-    value (value, instance) {
-      return instance.getStateOfOperation(value)
-    }
+    value: (value, instance) => instance.getStateOfOperation(value)
   },
   FW: {
     name: 'firmwareVersion',
@@ -422,14 +368,17 @@ module.exports = {
   },
   PID: {
     name: 'productId',
-    value (value, instance) {
-      value = String(value)
-      if (!value.includes('0x')) {
-        value = `0x${value}`
+    value: (value, instance) => {
+      let pid = String(value)
+      if (!pid.includes('0x')) {
+        pid = `0x${pid}`
       }
 
-      instance.set('productId', { name: 'productId', value })
-      instance.set('productName', { name: 'productId', value: instance.getProductLongname(value) })
+      instance.set('productId', { name: 'productId', value: pid })
+      instance.set('productName', {
+        name: 'productId',
+        value: instance.getProductLongname(pid)
+      })
       return null
     }
   },
@@ -445,9 +394,7 @@ module.exports = {
   MODE: {
     name: 'deviceMode',
     type: 'text',
-    value (value, instance) {
-      return instance.getMode(value)
-    }
+    value: (value, instance) => instance.getMode(value)
   },
   AC_OUT_V: {
     name: 'acOutputVoltage',
@@ -455,15 +402,10 @@ module.exports = {
     unitId: 'inverter',
     units: 'V',
     type: 'metric',
-    value (value, instance) {
-      value = common.number(value)
-
-      if (value === null) {
-        return
-      }
-
+    value: (value) => {
+      const n = common.number(value)
       // AC OUT V is reported in units of 0.01 V each.
-      return value / 100
+      return n === null ? null : n / 100
     }
   },
   AC_OUT_I: {
@@ -472,15 +414,10 @@ module.exports = {
     unitId: 'inverter',
     units: 'A',
     type: 'metric',
-    value (value, instance) {
-      value = common.number(value)
-
-      if (value === null) {
-        return
-      }
-
+    value: (value) => {
+      const n = common.number(value)
       // AC OUT I is reported in units of 0.1 A each.
-      return value / 10
+      return n === null ? null : n / 10
     }
   },
   WARN: {
@@ -496,8 +433,8 @@ module.exports = {
     path: 'electrical.solar.*.trackerOperationMode',
     unitId: 'solar',
     type: 'text',
-    value (value, instance) {
-      return instance.getTrackerOperationMode(value)
-    }
-  },
+    value: (value, instance) => instance.getTrackerOperationMode(value)
+  }
 }
+
+export default fields
