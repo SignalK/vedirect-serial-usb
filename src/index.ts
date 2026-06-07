@@ -22,20 +22,29 @@ const createPlugin = function (app: SignalKApp): Plugin {
   const parser: VEDirectParser[] = []
   let shaddow: PluginOptions | null = null
 
-  function startConnection(conn: VEDirectConnection, items: number): void {
+  function startConnection(
+    conn: VEDirectConnection,
+    connectionIndex: number
+  ): void {
     const instance = new VEDirectParser(shaddow ?? undefined)
-    parser[items] = instance
+    parser[connectionIndex] = instance
 
     instance.on('delta', (delta: SKDelta) => {
       app.handleMessage('pluginId', delta)
     })
 
     if (conn.device === 'Serial') {
-      serial.open(conn.connection, parser, app.debug, items)
+      serial.open(conn.connection, parser, app.debug, connectionIndex)
     } else if (conn.device === 'UDP') {
-      udp.listen(conn.port, parser, app.debug, items)
+      udp.listen(conn.port, parser, app.debug, connectionIndex)
     } else if (conn.device === 'TCP') {
-      tcp.connect(conn.connection, conn.port, parser, app.debug, items)
+      tcp.connect(
+        conn.connection,
+        conn.port,
+        parser,
+        app.debug,
+        connectionIndex
+      )
     }
   }
 
@@ -82,8 +91,8 @@ const createPlugin = function (app: SignalKApp): Plugin {
       shaddow = options
 
       if (options.vedirect !== undefined) {
-        options.vedirect.forEach((conn, items) => {
-          startConnection(conn, items)
+        options.vedirect.forEach((conn, connectionIndex) => {
+          startConnection(conn, connectionIndex)
         })
         return
       }
@@ -101,15 +110,15 @@ const createPlugin = function (app: SignalKApp): Plugin {
       }
 
       if (shaddow.vedirect !== undefined) {
-        shaddow.vedirect.forEach((conn, items) => {
-          parser[items]?.removeAllListeners()
-          delete parser[items]
+        shaddow.vedirect.forEach((conn, connectionIndex) => {
+          parser[connectionIndex]?.removeAllListeners()
+          delete parser[connectionIndex]
           if (conn.device === 'Serial') {
-            serial.close(app.debug, items)
+            serial.close(app.debug, connectionIndex)
           } else if (conn.device === 'UDP') {
-            udp.close(app.debug, items)
+            udp.close(app.debug, connectionIndex)
           } else {
-            tcp.close(app.debug, items)
+            tcp.close(app.debug, connectionIndex)
           }
         })
       }

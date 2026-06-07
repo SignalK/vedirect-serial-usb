@@ -15,10 +15,10 @@ export function listen(
   port: number,
   parser: VEDirectParser[],
   debug: DebugFn,
-  items: number
+  connectionIndex: number
 ): void {
   const sock = dgram.createSocket({ type: 'udp4', reuseAddr: true })
-  socket[items] = sock
+  socket[connectionIndex] = sock
 
   sock.on('listening', () => {
     debug(`listening on UDP ${port}`)
@@ -26,17 +26,17 @@ export function listen(
 
   sock.on('message', (msg: Buffer, rinfo: dgram.RemoteInfo) => {
     debug(`${rinfo.address}:${rinfo.port}:${msg}`)
-    parser[items]?.addChunk(msg, items)
+    parser[connectionIndex]?.addChunk(msg, connectionIndex)
   })
 
   sock.bind(port)
 }
 
-export function close(debug: DebugFn, items: number): void {
-  const sock = socket[items]
+export function close(debug: DebugFn, connectionIndex: number): void {
+  const sock = socket[connectionIndex]
   if (sock !== undefined) {
     sock.close()
-    socket[items] = undefined
+    socket[connectionIndex] = undefined
     debug('UDP port closed')
   }
 }

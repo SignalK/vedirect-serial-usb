@@ -19,13 +19,13 @@ function makeConnection(
   host: string,
   port: number,
   debug: DebugFn,
-  items: number
+  connectionIndex: number
 ): Net.Socket {
   const socket = new Net.Socket()
   socket.connect({ port, host })
   socket.setTimeout(SOCKET_TIMEOUT_MS)
   debug(`Connection to ${host}:${port}`)
-  client[items] = socket
+  client[connectionIndex] = socket
   return socket
 }
 
@@ -33,9 +33,9 @@ function onData(
   msg: Buffer,
   parser: VEDirectParser[],
   debug: DebugFn,
-  items: number
+  connectionIndex: number
 ): void {
-  parser[items]?.addChunk(msg, items)
+  parser[connectionIndex]?.addChunk(msg, connectionIndex)
   debug(`${msg}`)
 }
 
@@ -44,13 +44,13 @@ function onClose(
   port: number,
   parser: VEDirectParser[],
   debug: DebugFn,
-  items: number
+  connectionIndex: number
 ): void {
   // Only reconnect if the slot is still active (not cleared by close()).
-  if (client[items] !== undefined) {
+  if (client[connectionIndex] !== undefined) {
     setTimeout(() => {
       debug('Trying to reconnect')
-      connect(host, port, parser, debug, items)
+      connect(host, port, parser, debug, connectionIndex)
     }, RECONNECT_DELAY_MS)
   }
 }
@@ -60,18 +60,18 @@ export function connect(
   port: number,
   parser: VEDirectParser[],
   debug: DebugFn,
-  items: number
+  connectionIndex: number
 ): void {
-  const socket = makeConnection(host, port, debug, items)
+  const socket = makeConnection(host, port, debug, connectionIndex)
 
   socket.on('data', (msg: Buffer) => {
-    onData(msg, parser, debug, items)
+    onData(msg, parser, debug, connectionIndex)
   })
 
   socket.on('close', () => {
     debug('TCP connection closed')
     socket.destroy()
-    onClose(host, port, parser, debug, items)
+    onClose(host, port, parser, debug, connectionIndex)
   })
 
   socket.on('error', () => {
@@ -85,10 +85,10 @@ export function connect(
   })
 }
 
-export function close(debug: DebugFn, items: number): void {
-  const socket = client[items]
+export function close(debug: DebugFn, connectionIndex: number): void {
+  const socket = client[connectionIndex]
   if (socket !== undefined) {
-    client[items] = undefined
+    client[connectionIndex] = undefined
     socket.destroy()
     debug('TCP port closed')
   }
