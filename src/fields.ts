@@ -20,9 +20,10 @@ const common = {
   },
 
   // value is in units of 0.01 kWh each
+  // 0.01 kWh == 10 * 3600 Ws == 36,000 J
   kWh(value: string | number): number | undefined {
     const n = common.number(value)
-    return n === undefined ? undefined : n / 100
+    return n === undefined ? undefined : n * 36000
   },
 
   mV(value: string | number): number | undefined {
