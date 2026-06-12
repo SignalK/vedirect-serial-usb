@@ -91,10 +91,10 @@ describe('integration: real BlueSolar MPPT 75/10 capture', () => {
     expect(valueAt('electrical.solar.Main.panelPower')).to.equal(42) // PPV 42 W
     expect(valueAt('electrical.solar.Main.load')).to.equal('off') // LOAD OFF
     expect(valueAt('electrical.solar.Main.loadCurrent')).to.equal(0) // IL 0 mA
-    expect(valueAt('electrical.solar.Main.yieldTotal')).to.equal(60.78) // H19 6078 (0.01 kWh)
-    expect(valueAt('electrical.solar.Main.yieldToday')).to.equal(0.14) // H20 14
+    expect(valueAt('electrical.solar.Main.yieldTotal')).to.equal(218808000) // H19 6078 (0.01 kWh)
+    expect(valueAt('electrical.solar.Main.yieldToday')).to.equal(504000) // H20 14
     expect(valueAt('electrical.solar.Main.maximumPowerToday')).to.equal(100) // H21
-    expect(valueAt('electrical.solar.Main.yieldYesterday')).to.equal(0.52) // H22 52
+    expect(valueAt('electrical.solar.Main.yieldYesterday')).to.equal(1872000) // H22 52
     expect(valueAt('electrical.solar.Main.maximumPowerYesterday')).to.equal(148) // H23
   })
 

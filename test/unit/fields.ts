@@ -78,7 +78,7 @@ describe('fields - numeric converters', () => {
   })
 
   it('scales hundredths of a kWh to kWh (kWh)', () => {
-    expect(convert('H17', '6078')).to.equal(60.78)
+    expect(convert('H17', '6078')).to.equal(218808000)
     expect(convert('H17', 'x')).to.equal(undefined)
   })
 
