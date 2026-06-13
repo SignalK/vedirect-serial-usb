@@ -22,6 +22,11 @@ class FakeSerialPort {
   piped: FakeDelimiter | null = null
   closed = false
   closeThrows = false
+  // Mirrors SerialPort.isOpen; defaults to open since write() is only exercised
+  // after open(). A test flips it to false to model the reconnect gap.
+  isOpen = true
+  written: string[] = []
+  writeThrows = false
 
   constructor(public readonly opts: { path: string; baudRate: number }) {
     FakeSerialPort.instances.push(this)
@@ -33,6 +38,10 @@ class FakeSerialPort {
   pipe(delim: FakeDelimiter): FakeDelimiter {
     this.piped = delim
     return delim
+  }
+  write(data: string): void {
+    if (this.writeThrows) throw new Error('port dropped mid-write')
+    this.written.push(data)
   }
   close(): void {
     if (this.closeThrows) throw new Error('already gone')
@@ -176,6 +185,44 @@ describe('serial transport', () => {
 
       expect(FakeSerialPort.instances.length).to.equal(2)
       serial.close(() => {}, 0)
+    })
+  })
+
+  describe('write', () => {
+    it('writes a command to the open port and reports success', () => {
+      const serial = loadSerial()
+      serial.open('/dev/ttyUSB0', noParser, () => {}, 0)
+
+      const ok = serial.write(':84E030001FB\n', 0)
+
+      expect(ok).to.be.true
+      expect(FakeSerialPort.instances[0]!.written).to.deep.equal([
+        ':84E030001FB\n'
+      ])
+    })
+
+    it('reports failure when no port exists for the index', () => {
+      const serial = loadSerial()
+      expect(serial.write(':84E030001FB\n', 3)).to.be.false
+    })
+
+    it('reports failure (and does not write) when the port is not open', () => {
+      const serial = loadSerial()
+      serial.open('/dev/ttyUSB0', noParser, () => {}, 0)
+      FakeSerialPort.instances[0]!.isOpen = false // e.g. awaiting reconnect
+
+      const ok = serial.write(':84E030001FB\n', 0)
+
+      expect(ok).to.be.false
+      expect(FakeSerialPort.instances[0]!.written).to.have.lengthOf(0)
+    })
+
+    it('reports failure when the underlying write throws', () => {
+      const serial = loadSerial()
+      serial.open('/dev/ttyUSB0', noParser, () => {}, 0)
+      FakeSerialPort.instances[0]!.writeThrows = true
+
+      expect(serial.write(':84E030001FB\n', 0)).to.be.false
     })
   })
 })

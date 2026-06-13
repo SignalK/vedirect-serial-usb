@@ -13,15 +13,136 @@ import { VEDirectParser } from './Parser'
 import type {
   Plugin,
   PluginOptions,
+  PutHandler,
   SignalKApp,
   SKDelta,
   VEDirectConnection
 } from './types'
 import { PLUGIN_ID } from './constants'
 
+// VE.Direct HEX "Set" frames toggling the BMV-7xx built-in relay (register
+// 0x034E), exposing it as a writable Signal K switch for other plugins.
+//
+//   :  8    4E03    00     VV   CC \n
+//   |  Set  reg LE  flags  val  checksum
+//
+// CC is chosen so (0x08 + every payload byte) & 0xFF == 0x55 (VE.Direct HEX
+// checksum): on -> val 0x01 -> :84E030001FB,  off -> val 0x00 -> :84E030000FC.
+// The BMV only acts on these once its relay is set to remote control.
+const RELAY_ON = ':84E030001FB\n'
+const RELAY_OFF = ':84E030000FC\n'
+
+// Maps a Signal K relay PUT value to its VE.Direct command. Accepts the numeric
+// 1/0 the relay state is published as (see the RELAY field in src/fields.ts) and
+// boolean true/false for convenience. Returns null for any out-of-range value so
+// the handler can reject it.
+function relayCommand(value: unknown): string | null {
+  if (value === 1 || value === true) {
+    return RELAY_ON
+  }
+  if (value === 0 || value === false) {
+    return RELAY_OFF
+  }
+  return null
+}
+
 const createPlugin = function (app: SignalKApp): Plugin {
   const parser: VEDirectParser[] = []
+  // Unregister callbacks for the relay PUT handlers, indexed by connection like
+  // `parser`, so stop() can tear each one down.
+  const putUnregister: Array<() => void> = []
+  // Relay paths already claimed by a registered handler. Two serial connections
+  // configured with the same BMV name resolve to the same path; the host keeps
+  // only one handler, so a PUT could drive the wrong port. The duplicate is
+  // refused instead. Cleared on stop().
+  const registeredRelayPaths = new Set<string>()
   let shaddow: PluginOptions | null = null
+
+  // Builds the PUT handler for one serial connection's BMV relay. It writes the
+  // matching VE.Direct HEX command and reports failure (rather than a false 200)
+  // when the value is out of range or the serial port is not open. A 200 means
+  // the frame was written to the port, not that the relay switched: the BMV sends
+  // no acknowledgement and acts only when its relay is in remote control, so the
+  // reply says "sent", not "confirmed". Each outcome is logged so a command that
+  // looks accepted but changes nothing is still diagnosable from the plugin log.
+  function relayPutHandler(connectionIndex: number): PutHandler {
+    return (_context, path, value) => {
+      const command = relayCommand(value)
+      if (command === null) {
+        app.debug(
+          `Relay PUT on ${path} rejected: ${JSON.stringify(value)} is not 0/1 or true/false`
+        )
+        return {
+          state: 'COMPLETED',
+          statusCode: 400,
+          message: `Invalid relay value ${JSON.stringify(value)} for ${path}; expected 0/1 or true/false`
+        }
+      }
+
+      const desired = command === RELAY_ON ? 'on' : 'off'
+
+      if (!serial.write(command, connectionIndex)) {
+        app.debug(
+          `Relay PUT on ${path} ignored: serial connection ${connectionIndex} is not open`
+        )
+        return {
+          state: 'COMPLETED',
+          statusCode: 503,
+          message: `Serial connection ${connectionIndex} is not open; relay unchanged`
+        }
+      }
+
+      app.debug(
+        `Relay PUT on ${path}: ${desired} command sent to serial connection ${connectionIndex} (the BMV applies it only when its relay is in remote control)`
+      )
+      return {
+        state: 'COMPLETED',
+        statusCode: 200,
+        message: `Relay ${desired} command sent; takes effect only when the BMV relay is set to remote control`
+      }
+    }
+  }
+
+  // Exposes the BMV relay as a writable Signal K path for one serial connection,
+  // anchored on the configured BMV name (matching the RELAY read field's path,
+  // electrical.batteries.<bmv>). The relay belongs to the BMV-7xx, so it is
+  // registered only for battery monitors (the default when deviceType is unset),
+  // never for a solar charger, and only when a BMV name is configured to anchor
+  // the path. The skipped cases are logged rather than silent: the RELAY field
+  // still publishes the relay state, so a writable path that is quietly absent
+  // would be a mystery to whoever tries to PUT to it.
+  function registerRelayHandler(
+    conn: VEDirectConnection,
+    connectionIndex: number
+  ): void {
+    if (conn.deviceType === 'Solar charger') {
+      app.debug(
+        `Serial connection ${connectionIndex} is a solar charger, not a BMV; relay control disabled`
+      )
+      return
+    }
+    if (!conn.bmv) {
+      app.debug(
+        `Serial connection ${connectionIndex} has no BMV name; relay control disabled`
+      )
+      return
+    }
+
+    const path = `electrical.batteries.${conn.bmv}.relay`
+    if (registeredRelayPaths.has(path)) {
+      app.debug(
+        `Relay path ${path} is already registered by another connection; relay control disabled for serial connection ${connectionIndex}`
+      )
+      return
+    }
+
+    registeredRelayPaths.add(path)
+    putUnregister[connectionIndex] = app.registerPutHandler(
+      'vessels.self',
+      path,
+      relayPutHandler(connectionIndex)
+    )
+  }
 
   function startConnection(
     conn: VEDirectConnection,
@@ -36,6 +157,7 @@ const createPlugin = function (app: SignalKApp): Plugin {
 
     if (conn.device === 'Serial') {
       serial.open(conn.connection, parser, app.debug, connectionIndex)
+      registerRelayHandler(conn, connectionIndex)
     } else if (conn.device === 'UDP') {
       udp.listen(conn.port, parser, app.debug, connectionIndex)
     } else if (conn.device === 'TCP') {
@@ -115,6 +237,8 @@ const createPlugin = function (app: SignalKApp): Plugin {
         shaddow.vedirect.forEach((conn, connectionIndex) => {
           parser[connectionIndex]?.removeAllListeners()
           delete parser[connectionIndex]
+          putUnregister[connectionIndex]?.()
+          delete putUnregister[connectionIndex]
           if (conn.device === 'Serial') {
             serial.close(app.debug, connectionIndex)
           } else if (conn.device === 'UDP') {
@@ -123,6 +247,7 @@ const createPlugin = function (app: SignalKApp): Plugin {
             tcp.close(app.debug, connectionIndex)
           }
         })
+        registeredRelayPaths.clear()
       }
 
       shaddow = null

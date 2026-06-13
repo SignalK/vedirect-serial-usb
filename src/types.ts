@@ -73,11 +73,45 @@ export interface VEDirectConfig {
   deviceType?: DeviceType
 }
 
+/**
+ * Result of a Signal K PUT action. A handler returns `COMPLETED` (with an
+ * HTTP-like `statusCode`) to answer synchronously, or `PENDING` when it will
+ * call the async callback later. This plugin only answers synchronously.
+ */
+export interface PutResult {
+  state: 'COMPLETED' | 'PENDING'
+  statusCode?: number
+  message?: string
+}
+
+/**
+ * Handler for a PUT request on a registered context/path. `value` is whatever
+ * the requester sent (hence `unknown`; the handler narrows it). The trailing
+ * callback is for `PENDING` async replies and is unused here.
+ */
+export type PutHandler = (
+  context: string,
+  path: string,
+  value: unknown,
+  callback: (result: PutResult) => void
+) => PutResult | void
+
 /** Minimal structural type for the `app` the signalk-server host passes to
  *  the plugin factory. */
 export interface SignalKApp {
   handleMessage(id: string, delta: SKDelta): void
   debug: DebugFn
+  /**
+   * Registers a handler for PUT requests on `context`/`path`. Returns a
+   * function that unregisters it again, which the plugin calls on `stop()` so a
+   * config reload does not leave a stale handler writing to a closed port.
+   */
+  registerPutHandler(
+    context: string,
+    path: string,
+    handler: PutHandler,
+    source?: string
+  ): () => void
 }
 
 /** Shape of the plugin object returned to the signalk-server host. */

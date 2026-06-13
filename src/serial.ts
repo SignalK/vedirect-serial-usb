@@ -75,6 +75,34 @@ export function close(debug: DebugFn, connectionIndex: number): void {
   debug('Serial port closed')
 }
 
+/**
+ * Writes a raw command to a connection's serial port, used for outbound
+ * VE.Direct HEX control frames (e.g. setting the BMV relay). Returns true only
+ * when the port is open and the write was issued; false when no open port
+ * exists for the index (including the gap while an unexpectedly-closed port
+ * awaits reconnect) so the caller can report failure instead of assuming the
+ * command reached the device.
+ */
+export function write(message: string, connectionIndex: number): boolean {
+  const sp = port[connectionIndex]
+  if (sp === undefined || !sp.isOpen) {
+    return false
+  }
+
+  try {
+    sp.write(message)
+    // True means the write was issued, not flushed: serialport surfaces most
+    // write failures asynchronously via the 'error' event, which this
+    // synchronous boolean cannot reflect. The isOpen guard above covers the
+    // common "port not open" case, which is the failure mode worth reporting.
+    return true
+  } catch {
+    // The port can still drop between the isOpen check and the write; treat
+    // that as a failed write rather than a thrown error to the PUT requester.
+    return false
+  }
+}
+
 // Cancels any pending reconnect and closes the active port for a slot. The slot
 // is cleared before close() so the port's 'close' handler does not schedule a
 // reconnect for a deliberate teardown.
