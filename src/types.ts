@@ -159,12 +159,7 @@ export type FieldType = 'metric' | 'ratio' | 'text' | 'boolean' | 'count'
  * there to handle it.
  */
 export type UnitId =
-  | 'mainBatt'
-  | 'auxBatt'
-  | 'aux2Batt'
-  | 'bmv'
-  | 'solar'
-  | 'inverter'
+  'mainBatt' | 'auxBatt' | 'aux2Batt' | 'bmv' | 'solar' | 'inverter'
 
 /** A field definition: how to name, place and convert one VE.Direct token. */
 export interface Field {
