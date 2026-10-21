@@ -15,6 +15,7 @@ import { EventEmitter } from 'events'
 import fields from './fields'
 import { productIds } from './productIds'
 import type {
+  Field,
   FieldContext,
   FieldMap,
   PluginOptions,
@@ -365,7 +366,8 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         if (path === null || entry === undefined) {
           return null
         }
-        return { path, value: entry.value }
+        const remap = this.getOverride(name, connectionIndex)?.value
+        return { path, value: remap ? remap(entry.value) : entry.value }
       })
       .filter(
         (update): update is { path: string; value: number | string | null } =>
@@ -398,27 +400,38 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
     this.emit('delta', delta)
   }
 
-  getPath(name: string, connectionIndex: number): string | null {
-    const field = Object.values(this.fields).find(
+  private getField(name: string): Field | undefined {
+    return Object.values(this.fields).find(
       (f) => f.name === name && f.path !== undefined
     )
-    if (!field?.path) {
-      return null
-    }
+  }
 
+  private getOverride(
+    name: string,
+    connectionIndex: number
+  ): Field['inverter'] | undefined {
+    const field = this.getField(name)
     const conn = this.options.vedirect?.[connectionIndex]
-
     // On a solar charger, VE.Direct's V/I labels describe the charger's DC
     // output rather than a battery, so those fields are reported under
     // electrical.solar (via the field's solarCharger override) to avoid
     // clashing with a battery monitor on the same bank. Likewise an inverter's
     // V/CS/AC_OUT_* describe the inverter and go under electrical.inverters.
-    const override =
-      conn?.deviceType === 'Solar charger'
-        ? field.solarCharger
-        : conn?.deviceType === 'Inverter'
-          ? field.inverter
-          : undefined
+    return conn?.deviceType === 'Solar charger'
+      ? field?.solarCharger
+      : conn?.deviceType === 'Inverter'
+        ? field?.inverter
+        : undefined
+  }
+
+  getPath(name: string, connectionIndex: number): string | null {
+    const field = this.getField(name)
+    if (!field?.path) {
+      return null
+    }
+
+    const conn = this.options.vedirect?.[connectionIndex]
+    const override = this.getOverride(name, connectionIndex)
     const path = override?.path ?? field.path
     const unitId = override?.unitId ?? field.unitId
 

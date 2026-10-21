@@ -513,6 +513,32 @@ describe('VEDirectParser - getPath()', () => {
     )
   })
 
+  it('publishes CS as a spec inverterMode only for an inverter', () => {
+    const publish = (
+      deviceType: 'Inverter' | 'Battery monitor',
+      cs: string
+    ) => {
+      const p = new VEDirectParser({
+        vedirect: [{ ...CONNECTION.vedirect![0]!, deviceType }]
+      })
+      let values: unknown
+      p.on('delta', (d: SKDelta) => (values = d.updates[0]!.values))
+      p.parse(`CS\t${cs}`)
+      p.generateDelta(0)
+      return values
+    }
+    const mode = 'electrical.inverters.victronDevice.inverterMode'
+    expect(publish('Inverter', '9')).to.deep.equal([
+      { path: mode, value: 'inverting' }
+    ])
+    expect(publish('Inverter', '0')).to.deep.equal([
+      { path: mode, value: 'disabled' }
+    ])
+    expect(publish('Battery monitor', '9')).to.deep.equal([
+      { path: 'electrical.charger.House.chargingMode', value: 'inverting' }
+    ])
+  })
+
   it('falls back to victronDevice for an inverter with no name', () => {
     const phoenix = new VEDirectParser({
       vedirect: [{ ...CONNECTION.vedirect![0]!, deviceType: 'Inverter' }]

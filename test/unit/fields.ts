@@ -418,11 +418,25 @@ describe('fields - static table', () => {
     })
   })
 
+  it('maps CS states onto the Signal K inverterMode enum', () => {
+    const toMode = fields.CS!.inverter!.value!
+    expect(
+      ['off', 'low power', 'fault', 'inverting', 'float', null].map(toMode)
+    ).to.deep.equal([
+      'disabled',
+      'standby',
+      'faulted',
+      'inverting',
+      'other',
+      null
+    ])
+  })
+
   it('routes DC input, state and AC output to electrical.inverters for an inverter', () => {
     const overrides = Object.fromEntries(
       ['V', 'I', 'CS', 'AC_OUT_V', 'AC_OUT_I'].map((k) => [
         k,
-        fields[k]!.inverter
+        { path: fields[k]!.inverter!.path, unitId: fields[k]!.inverter!.unitId }
       ])
     )
     expect(overrides).to.deep.equal({

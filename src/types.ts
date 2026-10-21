@@ -184,7 +184,13 @@ export interface Field {
    * they belong under electrical.inverters rather than creating a phantom
    * battery and charger.
    */
-  inverter?: { path: string; unitId: UnitId }
+  inverter?: {
+    path: string
+    unitId: UnitId
+    /** Re-maps the stored value for this path (e.g. CS onto the spec's
+     *  inverterMode enum). */
+    value?: (value: number | string | null) => number | string | null
+  }
   units?: string
   type?: FieldType
   value?: FieldValue

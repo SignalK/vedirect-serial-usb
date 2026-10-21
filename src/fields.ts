@@ -47,6 +47,14 @@ const common = {
   }
 }
 
+/** Decoded CS states mapped onto the Signal K inverterMode enum. */
+const INVERTER_MODES: Record<string, string> = {
+  off: 'disabled',
+  'low power': 'standby',
+  fault: 'faulted',
+  inverting: 'inverting'
+}
+
 const fields: FieldMap = {
   V: {
     name: 'mainBattVoltage',
@@ -379,7 +387,10 @@ const fields: FieldMap = {
     unitId: 'mainBatt',
     inverter: {
       path: 'electrical.inverters.*.inverterMode',
-      unitId: 'inverter'
+      unitId: 'inverter',
+      // Charger-only states (bulk, float...) have no inverterMode equivalent.
+      value: (value) =>
+        typeof value === 'string' ? (INVERTER_MODES[value] ?? 'other') : value
     },
     type: 'text',
     value: (value, instance) => instance.getStateOfOperation(value)
