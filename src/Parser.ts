@@ -411,9 +411,14 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
     // On a solar charger, VE.Direct's V/I labels describe the charger's DC
     // output rather than a battery, so those fields are reported under
     // electrical.solar (via the field's solarCharger override) to avoid
-    // clashing with a battery monitor on the same bank.
+    // clashing with a battery monitor on the same bank. Likewise an inverter's
+    // V/CS/AC_OUT_* describe the inverter and go under electrical.inverters.
     const override =
-      conn?.deviceType === 'Solar charger' ? field.solarCharger : undefined
+      conn?.deviceType === 'Solar charger'
+        ? field.solarCharger
+        : conn?.deviceType === 'Inverter'
+          ? field.inverter
+          : undefined
     const path = override?.path ?? field.path
     const unitId = override?.unitId ?? field.unitId
 
@@ -424,10 +429,11 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
   }
 
   /**
-   * Resolves a field's unit id to the configured device name. The four
-   * configurable units come from the connection; aux2Batt/inverter have no
-   * config slot and use defaultUnitId. The switch is exhaustive over UnitId,
-   * so adding a unit without handling it here is a compile error.
+   * Resolves a field's unit id to the configured device name. The five
+   * configurable units come from the connection; aux2Batt has no config slot
+   * and uses defaultUnitId, as does any unit left unset. The switch is
+   * exhaustive over UnitId, so adding a unit without handling it here is a
+   * compile error.
    */
   private resolveUnitId(
     unitId: UnitId,
@@ -442,8 +448,9 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         return conn?.bmv || this.options.defaultUnitId
       case 'solar':
         return conn?.solar || this.options.defaultUnitId
-      case 'aux2Batt':
       case 'inverter':
+        return conn?.inverter || this.options.defaultUnitId
+      case 'aux2Batt':
         return this.options.defaultUnitId
     }
   }

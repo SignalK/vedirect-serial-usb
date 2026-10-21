@@ -56,6 +56,7 @@ const fields: FieldMap = {
     // battery, so they are reported under electrical.solar to avoid clashing
     // with a battery monitor on the same bank.
     solarCharger: { path: 'electrical.solar.*.voltage', unitId: 'solar' },
+    inverter: { path: 'electrical.inverters.*.dc.voltage', unitId: 'inverter' },
     value: common.mV,
     units: 'V',
     type: 'metric'
@@ -118,6 +119,7 @@ const fields: FieldMap = {
     // Like V, on a solar charger this is the charger's DC output and is reported
     // under electrical.solar rather than electrical.batteries.
     solarCharger: { path: 'electrical.solar.*.current', unitId: 'solar' },
+    inverter: { path: 'electrical.inverters.*.dc.current', unitId: 'inverter' },
     value: common.mA,
     units: 'A',
     type: 'metric'
@@ -375,6 +377,10 @@ const fields: FieldMap = {
     name: 'stateOfOperation',
     path: 'electrical.charger.*.chargingMode',
     unitId: 'mainBatt',
+    inverter: {
+      path: 'electrical.inverters.*.inverterMode',
+      unitId: 'inverter'
+    },
     type: 'text',
     value: (value, instance) => instance.getStateOfOperation(value)
   },
@@ -416,6 +422,11 @@ const fields: FieldMap = {
     name: 'acOutputVoltage',
     path: 'electrical.ac.*.phase.A.lineLineVoltage',
     unitId: 'inverter',
+    // A Phoenix output is single phase, so measured line to neutral.
+    inverter: {
+      path: 'electrical.inverters.*.ac.lineNeutralVoltage',
+      unitId: 'inverter'
+    },
     units: 'V',
     type: 'metric',
     value: (value) => {
@@ -428,6 +439,7 @@ const fields: FieldMap = {
     name: 'acOutputCurrent',
     path: 'electrical.ac.*.phase.A.current',
     unitId: 'inverter',
+    inverter: { path: 'electrical.inverters.*.ac.current', unitId: 'inverter' },
     units: 'A',
     type: 'metric',
     value: (value) => {

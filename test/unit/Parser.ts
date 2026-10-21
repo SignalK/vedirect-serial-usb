@@ -489,6 +489,39 @@ describe('VEDirectParser - getPath()', () => {
     )
   })
 
+  it('routes an inverter under electrical.inverters, not a battery or charger', () => {
+    const phoenix = new VEDirectParser({
+      vedirect: [
+        {
+          ...CONNECTION.vedirect![0]!,
+          deviceType: 'Inverter',
+          inverter: 'Phoenix'
+        }
+      ]
+    })
+    expect(phoenix.getPath('mainBattVoltage', 0)).to.equal(
+      'electrical.inverters.Phoenix.dc.voltage'
+    )
+    expect(phoenix.getPath('stateOfOperation', 0)).to.equal(
+      'electrical.inverters.Phoenix.inverterMode'
+    )
+    expect(phoenix.getPath('acOutputVoltage', 0)).to.equal(
+      'electrical.inverters.Phoenix.ac.lineNeutralVoltage'
+    )
+    expect(phoenix.getPath('acOutputCurrent', 0)).to.equal(
+      'electrical.inverters.Phoenix.ac.current'
+    )
+  })
+
+  it('falls back to victronDevice for an inverter with no name', () => {
+    const phoenix = new VEDirectParser({
+      vedirect: [{ ...CONNECTION.vedirect![0]!, deviceType: 'Inverter' }]
+    })
+    expect(phoenix.getPath('mainBattVoltage', 0)).to.equal(
+      'electrical.inverters.victronDevice.dc.voltage'
+    )
+  })
+
   it('keeps current on the battery path for a battery monitor', () => {
     expect(parser.getPath('batteryCurrent', 0)).to.equal(
       'electrical.batteries.House.current'

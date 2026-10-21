@@ -200,7 +200,7 @@ describe('plugin factory', () => {
     expect(schema.properties.vedirect.type).to.equal('array')
     expect(
       schema.properties.vedirect.items.properties.deviceType.enum
-    ).to.deep.equal(['Battery monitor', 'Solar charger'])
+    ).to.deep.equal(['Battery monitor', 'Solar charger', 'Inverter'])
   })
 
   it('starts the matching transport for each configured device', () => {
@@ -372,6 +372,22 @@ describe('relay PUT handler', () => {
     })
     expect(puts).to.have.lengthOf(0)
     expect(debugLogs.some((m) => m.includes('solar charger'))).to.be.true
+  })
+
+  it('registers no relay handler, and logs, for an inverter', () => {
+    const { plugin, puts, debugLogs } = loadPlugin()
+    plugin.start({
+      vedirect: [
+        conn({
+          device: 'Serial',
+          connection: '/dev/ttyUSB0',
+          deviceType: 'Inverter',
+          bmv: 'house'
+        })
+      ]
+    })
+    expect(puts).to.have.lengthOf(0)
+    expect(debugLogs.some((m) => m.includes('inverter, not a BMV'))).to.be.true
   })
 
   it('registers a relay handler for an explicit battery monitor', () => {

@@ -18,10 +18,11 @@ export type DebugFn = (message: string) => void
 /**
  * What kind of Victron device a connection talks to. VE.Direct reuses the
  * `V`/`I` labels for both battery monitors and solar chargers, so the device
- * type decides where those readings land (see `Field.solarCharger`). Treated as
- * a battery monitor when unset, which preserves the historical paths.
+ * type decides where those readings land (see `Field.solarCharger` and
+ * `Field.inverter`). Treated as a battery monitor when unset, which preserves
+ * the historical paths.
  */
-export type DeviceType = 'Battery monitor' | 'Solar charger'
+export type DeviceType = 'Battery monitor' | 'Solar charger' | 'Inverter'
 
 /** One VE.Direct connection as configured in the plugin schema. */
 export interface VEDirectConnection {
@@ -34,6 +35,7 @@ export interface VEDirectConnection {
   auxBatt: string
   bmv: string
   solar: string
+  inverter?: string
 }
 
 /**
@@ -53,6 +55,7 @@ export interface PluginOptions {
   auxBatt?: string
   bmv?: string
   solar?: string
+  inverter?: string
   deviceType?: DeviceType
 }
 
@@ -70,6 +73,7 @@ export interface VEDirectConfig {
   auxBatt?: string
   bmv?: string
   solar?: string
+  inverter?: string
   deviceType?: DeviceType
 }
 
@@ -152,9 +156,9 @@ export type FieldType = 'metric' | 'ratio' | 'text' | 'boolean' | 'count'
 
 /**
  * Identifies which configured device name fills a field path's `*` placeholder.
- * `mainBatt`/`auxBatt`/`bmv`/`solar` map to the per-connection config;
- * `aux2Batt`/`inverter` have no config slot and fall back to the parser's
- * `defaultUnitId`. Keeping this a union (rather than `string`) ties the field
+ * `mainBatt`/`auxBatt`/`bmv`/`solar`/`inverter` map to the per-connection
+ * config (falling back to the parser's `defaultUnitId` when unset); `aux2Batt`
+ * has no config slot and always uses `defaultUnitId`. Keeping this a union (rather than `string`) ties the field
  * table to the resolver in `getPath`: adding a new unit here forces the switch
  * there to handle it.
  */
@@ -174,6 +178,13 @@ export interface Field {
    * monitor on the same bank.
    */
   solarCharger?: { path: string; unitId: UnitId }
+  /**
+   * Alternative path and unit used when the connection is an inverter (e.g. a
+   * Phoenix). Its V is the inverter's DC input and its CS the inverter state, so
+   * they belong under electrical.inverters rather than creating a phantom
+   * battery and charger.
+   */
+  inverter?: { path: string; unitId: UnitId }
   units?: string
   type?: FieldType
   value?: FieldValue

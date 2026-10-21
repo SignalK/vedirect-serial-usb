@@ -107,7 +107,7 @@ const createPlugin = function (app: SignalKApp): Plugin {
   // anchored on the configured BMV name (matching the RELAY read field's path,
   // electrical.batteries.<bmv>). The relay belongs to the BMV-7xx, so it is
   // registered only for battery monitors (the default when deviceType is unset),
-  // never for a solar charger, and only when a BMV name is configured to anchor
+  // never for a solar charger or an inverter, and only when a BMV name is configured to anchor
   // the path. The skipped cases are logged rather than silent: the RELAY field
   // still publishes the relay state, so a writable path that is quietly absent
   // would be a mystery to whoever tries to PUT to it.
@@ -115,9 +115,9 @@ const createPlugin = function (app: SignalKApp): Plugin {
     conn: VEDirectConnection,
     connectionIndex: number
   ): void {
-    if (conn.deviceType === 'Solar charger') {
+    if (conn.deviceType === 'Solar charger' || conn.deviceType === 'Inverter') {
       app.debug(
-        `Serial connection ${connectionIndex} is a solar charger, not a BMV; relay control disabled`
+        `Serial connection ${connectionIndex} is a ${conn.deviceType.toLowerCase()}, not a BMV; relay control disabled`
       )
       return
     }
@@ -181,6 +181,7 @@ const createPlugin = function (app: SignalKApp): Plugin {
       auxBatt: options.auxBatt ?? 'Starter',
       bmv: options.bmv ?? 'bmv',
       solar: options.solar ?? 'Main',
+      inverter: options.inverter,
       deviceType: options.deviceType
     }
 
@@ -287,9 +288,9 @@ const createPlugin = function (app: SignalKApp): Plugin {
                 type: 'string',
                 title: 'Device type',
                 description:
-                  'Battery monitor keeps V/I under electrical.batteries; Solar charger (MPPT) routes V/I under electrical.solar to avoid clashing with a battery monitor on the same bank',
+                  'Battery monitor keeps V/I under electrical.batteries; Solar charger (MPPT) routes V/I under electrical.solar to avoid clashing with a battery monitor on the same bank; Inverter (e.g. Phoenix) routes V/CS/AC output under electrical.inverters instead of creating a battery and a charger',
                 default: 'Battery monitor',
-                enum: ['Battery monitor', 'Solar charger']
+                enum: ['Battery monitor', 'Solar charger', 'Inverter']
               },
               ignoreChecksum: {
                 type: 'boolean',
@@ -315,6 +316,12 @@ const createPlugin = function (app: SignalKApp): Plugin {
                 type: 'string',
                 title: 'Solar name in SK path',
                 default: 'Main'
+              },
+              inverter: {
+                type: 'string',
+                title: 'Inverter name in SK path',
+                description:
+                  'Used for electrical.inverters.<name> and electrical.ac.<name>; empty keeps victronDevice'
               }
             }
           }

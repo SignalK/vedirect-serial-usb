@@ -417,4 +417,26 @@ describe('fields - static table', () => {
       unitId: 'solar'
     })
   })
+
+  it('routes DC input, state and AC output to electrical.inverters for an inverter', () => {
+    const overrides = Object.fromEntries(
+      ['V', 'I', 'CS', 'AC_OUT_V', 'AC_OUT_I'].map((k) => [
+        k,
+        fields[k]!.inverter
+      ])
+    )
+    expect(overrides).to.deep.equal({
+      V: { path: 'electrical.inverters.*.dc.voltage', unitId: 'inverter' },
+      I: { path: 'electrical.inverters.*.dc.current', unitId: 'inverter' },
+      CS: { path: 'electrical.inverters.*.inverterMode', unitId: 'inverter' },
+      AC_OUT_V: {
+        path: 'electrical.inverters.*.ac.lineNeutralVoltage',
+        unitId: 'inverter'
+      },
+      AC_OUT_I: {
+        path: 'electrical.inverters.*.ac.current',
+        unitId: 'inverter'
+      }
+    })
+  })
 })
