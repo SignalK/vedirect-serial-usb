@@ -15,6 +15,7 @@ import { EventEmitter } from 'events'
 import fields from './fields'
 import { productIds } from './productIds'
 import type {
+  Field,
   FieldContext,
   FieldMap,
   PluginOptions,
@@ -365,7 +366,8 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         if (path === null || entry === undefined) {
           return null
         }
-        return { path, value: entry.value }
+        const remap = this.getOverride(name, connectionIndex)?.value
+        return { path, value: remap ? remap(entry.value) : entry.value }
       })
       .filter(
         (update): update is { path: string; value: number | string | null } =>
@@ -398,22 +400,38 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
     this.emit('delta', delta)
   }
 
-  getPath(name: string, connectionIndex: number): string | null {
-    const field = Object.values(this.fields).find(
+  private getField(name: string): Field | undefined {
+    return Object.values(this.fields).find(
       (f) => f.name === name && f.path !== undefined
     )
+  }
+
+  private getOverride(
+    name: string,
+    connectionIndex: number
+  ): Field['inverter'] | undefined {
+    const field = this.getField(name)
+    const conn = this.options.vedirect?.[connectionIndex]
+    // On a solar charger, VE.Direct's V/I labels describe the charger's DC
+    // output rather than a battery, so those fields are reported under
+    // electrical.solar (via the field's solarCharger override) to avoid
+    // clashing with a battery monitor on the same bank. Likewise an inverter's
+    // V/CS/AC_OUT_* describe the inverter and go under electrical.inverters.
+    return conn?.deviceType === 'Solar charger'
+      ? field?.solarCharger
+      : conn?.deviceType === 'Inverter'
+        ? field?.inverter
+        : undefined
+  }
+
+  getPath(name: string, connectionIndex: number): string | null {
+    const field = this.getField(name)
     if (!field?.path) {
       return null
     }
 
     const conn = this.options.vedirect?.[connectionIndex]
-
-    // On a solar charger, VE.Direct's V/I labels describe the charger's DC
-    // output rather than a battery, so those fields are reported under
-    // electrical.solar (via the field's solarCharger override) to avoid
-    // clashing with a battery monitor on the same bank.
-    const override =
-      conn?.deviceType === 'Solar charger' ? field.solarCharger : undefined
+    const override = this.getOverride(name, connectionIndex)
     const path = override?.path ?? field.path
     const unitId = override?.unitId ?? field.unitId
 
@@ -424,10 +442,11 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
   }
 
   /**
-   * Resolves a field's unit id to the configured device name. The four
-   * configurable units come from the connection; aux2Batt/inverter have no
-   * config slot and use defaultUnitId. The switch is exhaustive over UnitId,
-   * so adding a unit without handling it here is a compile error.
+   * Resolves a field's unit id to the configured device name. The five
+   * configurable units come from the connection; aux2Batt has no config slot
+   * and uses defaultUnitId, as does any unit left unset. The switch is
+   * exhaustive over UnitId, so adding a unit without handling it here is a
+   * compile error.
    */
   private resolveUnitId(
     unitId: UnitId,
@@ -442,8 +461,9 @@ export class VEDirectParser extends EventEmitter implements FieldContext {
         return conn?.bmv || this.options.defaultUnitId
       case 'solar':
         return conn?.solar || this.options.defaultUnitId
-      case 'aux2Batt':
       case 'inverter':
+        return conn?.inverter || this.options.defaultUnitId
+      case 'aux2Batt':
         return this.options.defaultUnitId
     }
   }

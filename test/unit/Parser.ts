@@ -489,6 +489,65 @@ describe('VEDirectParser - getPath()', () => {
     )
   })
 
+  it('routes an inverter under electrical.inverters, not a battery or charger', () => {
+    const phoenix = new VEDirectParser({
+      vedirect: [
+        {
+          ...CONNECTION.vedirect![0]!,
+          deviceType: 'Inverter',
+          inverter: 'Phoenix'
+        }
+      ]
+    })
+    expect(phoenix.getPath('mainBattVoltage', 0)).to.equal(
+      'electrical.inverters.Phoenix.dc.voltage'
+    )
+    expect(phoenix.getPath('stateOfOperation', 0)).to.equal(
+      'electrical.inverters.Phoenix.inverterMode'
+    )
+    expect(phoenix.getPath('acOutputVoltage', 0)).to.equal(
+      'electrical.inverters.Phoenix.ac.lineNeutralVoltage'
+    )
+    expect(phoenix.getPath('acOutputCurrent', 0)).to.equal(
+      'electrical.inverters.Phoenix.ac.current'
+    )
+  })
+
+  it('publishes CS as a spec inverterMode only for an inverter', () => {
+    const publish = (
+      deviceType: 'Inverter' | 'Battery monitor',
+      cs: string
+    ) => {
+      const p = new VEDirectParser({
+        vedirect: [{ ...CONNECTION.vedirect![0]!, deviceType }]
+      })
+      let values: unknown
+      p.on('delta', (d: SKDelta) => (values = d.updates[0]!.values))
+      p.parse(`CS\t${cs}`)
+      p.generateDelta(0)
+      return values
+    }
+    const mode = 'electrical.inverters.victronDevice.inverterMode'
+    expect(publish('Inverter', '9')).to.deep.equal([
+      { path: mode, value: 'inverting' }
+    ])
+    expect(publish('Inverter', '0')).to.deep.equal([
+      { path: mode, value: 'disabled' }
+    ])
+    expect(publish('Battery monitor', '9')).to.deep.equal([
+      { path: 'electrical.charger.House.chargingMode', value: 'inverting' }
+    ])
+  })
+
+  it('falls back to victronDevice for an inverter with no name', () => {
+    const phoenix = new VEDirectParser({
+      vedirect: [{ ...CONNECTION.vedirect![0]!, deviceType: 'Inverter' }]
+    })
+    expect(phoenix.getPath('mainBattVoltage', 0)).to.equal(
+      'electrical.inverters.victronDevice.dc.voltage'
+    )
+  })
+
   it('keeps current on the battery path for a battery monitor', () => {
     expect(parser.getPath('batteryCurrent', 0)).to.equal(
       'electrical.batteries.House.current'
