@@ -407,7 +407,7 @@ describe('VEDirectParser - getPath()', () => {
       'electrical.batteries.victronDevice.voltage'
     )
     expect(parser.getPath('acOutputVoltage', 0)).to.equal(
-      'electrical.ac.victronDevice.phase.A.lineLineVoltage'
+      'electrical.ac.victronDevice.phase.A.lineNeutralVoltage'
     )
   })
 
