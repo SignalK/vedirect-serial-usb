@@ -431,9 +431,10 @@ const fields: FieldMap = {
   },
   AC_OUT_V: {
     name: 'acOutputVoltage',
-    path: 'electrical.ac.*.phase.A.lineLineVoltage',
+    // Only inverters send AC_OUT_V, and a Phoenix output is single phase, so
+    // it is measured line to neutral, not between two lines.
+    path: 'electrical.ac.*.phase.A.lineNeutralVoltage',
     unitId: 'inverter',
-    // A Phoenix output is single phase, so measured line to neutral.
     inverter: {
       path: 'electrical.inverters.*.ac.lineNeutralVoltage',
       unitId: 'inverter'

@@ -362,7 +362,7 @@ describe('fields - static table', () => {
     MODE: ['deviceMode', null, null, null, 'text'],
     AC_OUT_V: [
       'acOutputVoltage',
-      'electrical.ac.*.phase.A.lineLineVoltage',
+      'electrical.ac.*.phase.A.lineNeutralVoltage',
       'inverter',
       'V',
       'metric'
